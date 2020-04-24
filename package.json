@@ -1,7 +1,7 @@
 {
-  "name": "next-starter-tailwind",
-  "version": "1.0.5",
-  "description": "Next.js starter styled with Tailwind CSS",
+  "name": "donato",
+  "version": "1.0.0",
+  "description": "Donation platform based on Ethereum",
   "main": "index.js",
   "scripts": {
     "dev": "dotenv next",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/taylorbryant/next-starter-tailwind.git"
   },
-  "author": "Taylor Bryant",
+  "author": "DonaTo team",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/taylorbryant/next-starter-tailwind/issues"

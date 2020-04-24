@@ -1,12 +1,25 @@
 import Layout from "../components/layout";
 import { useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Home(props) {
   const campaigns = useSelector((state) => state.campaigns);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [address, setAddress] = useState("");
+
+  useEffect(() => {
+    if (isRedirecting) {
+      setTimeout(() => {
+        window.location.href = `https://buy-staging.moonpay.io?apiKey=${process.env.MOONPAY_KEY}&currencyCode=dai&walletAddress=${address}&enabledPaymentMethods=credit_debit_card,sepa_bank_transfer&redirectURL=http://localhost:3000`;
+      }, 3500);
+
+      return () => clearTimeout();
+    }
+  }, [isRedirecting]);
 
   function redirectToPayment(address) {
-    window.location.href = `https://buy-staging.moonpay.io?apiKey=${process.env.MOONPAY_KEY}&currencyCode=dai&walletAddress=${address}&redirectURL=http://localhost:3000`;
+    setAddress(address);
+    setIsRedirecting(true);
   }
 
   return (
@@ -14,10 +27,14 @@ function Home(props) {
       <div className="flex flex-col">
         <h1 className="text-3xl">Campaigns</h1>
         {campaigns.map((campaign, i) => (
-          <div className="flex justify-between w-full px-2 py-4 border-2 border-gray-200 rounded">
-            <h2>{campaign.name}</h2>
+          <div className="flex justify-between w-full p-4 border-2 border-gray-200 rounded-lg">
+            <div>
+              <h2 className="font-bold">{campaign.name}</h2>
+              <p className="text-gray-700">{campaign.description}</p>
+            </div>
             <button
               type="button"
+              className="p-2 rounded-md hover:bg-gray-200"
               onClick={() => redirectToPayment(campaign.address)}
             >
               Donate
@@ -25,6 +42,13 @@ function Home(props) {
           </div>
         ))}
       </div>
+      {isRedirecting && (
+        <div className="absolute top-0 bottom-0 left-0 right-0 opacity-75">
+          <div className="flex items-center justify-center w-full h-full bg-white">
+            We are redirecting you to our trusted payment processor...
+          </div>
+        </div>
+      )}
       {props.transactionId !== "" && props.transactionStatus !== "" && (
         <div className="absolute bottom-0 right-0 p-4 m-8 text-green-800 bg-green-200">
           Your donation went well!

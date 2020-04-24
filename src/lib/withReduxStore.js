@@ -27,7 +27,9 @@ export default (App) => {
         user: { address: "" },
         campaigns: [
           {
-            name: "Recipient name",
+            name: "Bottega del quartiere",
+            description:
+              "Our business is ran from my grandgrandfather since 1800s, but due to this dire situation we're asking for help",
             address: "0x1790Ba880D648DB9a5aEAdA458343566D0405201",
           },
         ],
