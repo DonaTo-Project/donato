@@ -25,12 +25,18 @@ function Home(props) {
   return (
     <Layout>
       <div className="flex flex-col">
-        <h1 className="text-3xl">Campaigns</h1>
+        <h1 className="pb-8 pl-4 text-3xl">Campaigns</h1>
         {campaigns.map((campaign, i) => (
-          <div className="flex justify-between w-full p-4 border-2 border-gray-200 rounded-lg">
+          <div
+            key={i}
+            className="flex flex-col justify-between w-full p-4 border-2 border-gray-200 rounded-lg sm:flex-row"
+          >
             <div>
               <h2 className="font-bold">{campaign.name}</h2>
-              <p className="text-gray-700">{campaign.description}</p>
+              <p className="mb-8 text-gray-700">{campaign.description}</p>
+              <span className="p-2 text-purple-800 bg-purple-200 rounded-full">
+                {campaign.balance} € already donated
+              </span>
             </div>
             <button
               type="button"

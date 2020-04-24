@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Box from "3box";
 import Fortmatic from "fortmatic";
 import Web3 from "web3";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,18 +12,38 @@ function Header() {
   const dispatch = useDispatch();
   const [isExpanded, toggleExpansion] = useState(false);
 
-  async function handleLogin(e) {
+  async function changeUserAuthStatus(e) {
     e.preventDefault();
 
     let fm = new Fortmatic(process.env.FORTMATIC_KEY);
-    web3 = new Web3(fm.getProvider());
+    window.web3 = new Web3(fm.getProvider());
 
-    let isUserLoggedIn = await fm.user.isLoggedIn();
-    console.log(isUserLoggedIn); // false
+    try {
+      let isUserLoggedIn = await fm.user.isLoggedIn();
+      if (!isUserLoggedIn) {
+        const coinbase = await web3.eth.getCoinbase();
 
-    const coinbase = await web3.eth.getCoinbase();
+        // const provider = await Box.get3idConnectProvider();
+        // const box = await Box.openBox(coinbase, provider);
 
-    await dispatch(updateUser({ address: coinbase }));
+        // const spaces = ["DonaTo"];
+        // await box.auth(spaces, { address: coinbase });
+
+        // console.log("Started syncing...");
+        // await box.syncDone;
+
+        // const nickname = await box.public.get("name");
+        // console.log(nickname);
+
+        await dispatch(updateUser({ address: coinbase }));
+      } else {
+        await fm.user.logout();
+        await dispatch(updateUser({ address: "" }));
+      }
+    } catch (err) {
+      console.log("AAAAA");
+      console.log(err);
+    }
   }
 
   return (
@@ -56,6 +77,7 @@ function Header() {
           {[
             { title: "Home", route: "/" },
             { title: "About", route: "/about" },
+            { title: "Want to receive donations?", route: "/join_list" },
           ].map((navigationItem) => (
             <li className="mt-3 md:mt-0 md:ml-6" key={navigationItem.title}>
               <Link href={navigationItem.route}>
@@ -64,7 +86,7 @@ function Header() {
             </li>
           ))}
           <li className="mt-3 md:mt-0 md:ml-6" key="login">
-            <button onClick={handleLogin} className="block text-white">
+            <button onClick={changeUserAuthStatus} className="block text-white">
               {user.address === "" ? "Login" : "Logout"}
             </button>
           </li>
