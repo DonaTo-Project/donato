@@ -2,21 +2,27 @@ import Link from "next/link";
 import { useState } from "react";
 import Fortmatic from "fortmatic";
 import Web3 from "web3";
+import { useSelector, useDispatch } from "react-redux";
+
+import { updateUser } from "../state/user/actions";
 
 function Header() {
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const [isExpanded, toggleExpansion] = useState(false);
-
-  const [account, setAccount] = useState("");
 
   async function handleLogin(e) {
     e.preventDefault();
 
-    let fm = new Fortmatic("pk_test_FA190E46281CC1FB");
+    let fm = new Fortmatic(process.env.FORTMATIC_KEY);
     web3 = new Web3(fm.getProvider());
+
+    let isUserLoggedIn = await fm.user.isLoggedIn();
+    console.log(isUserLoggedIn); // false
 
     const coinbase = await web3.eth.getCoinbase();
 
-    setAccount(coinbase);
+    await dispatch(updateUser({ address: coinbase }));
   }
 
   return (
@@ -59,7 +65,7 @@ function Header() {
           ))}
           <li className="mt-3 md:mt-0 md:ml-6" key="login">
             <button onClick={handleLogin} className="block text-white">
-              {account === "" ? "Login" : "Logout"}
+              {user.address === "" ? "Login" : "Logout"}
             </button>
           </li>
         </ul>

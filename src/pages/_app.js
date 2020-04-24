@@ -1,10 +1,10 @@
 import { Provider } from "react-redux";
 
+import withReduxStore from "../lib/withReduxStore";
+
 import "../style.css";
 
-function MyApp({ Component, pageProps }) {
-  const { Component, pageProps, reduxStore, router } = this.props;
-
+function DonatoApp({ Component, pageProps, reduxStore }) {
   return (
     <Provider store={reduxStore}>
       <Component {...pageProps} />
@@ -12,4 +12,4 @@ function MyApp({ Component, pageProps }) {
   );
 }
 
-export { MyApp as default, UserContext };
+export default withReduxStore(DonatoApp);
