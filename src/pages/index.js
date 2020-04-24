@@ -1,17 +1,19 @@
+import { UserContext } from "./_app";
 import Layout from "../components/layout";
+import { useContext } from "react";
 
 function Home() {
+  const user = useContext(UserContext);
+
+  console.log(user);
+
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center">
-        <img
-          src="team-of-critters.svg"
-          className="max-w-xl w-full"
-        />
-
-        <h2 className="bg-yellow-400 font-bold my-8 p-3 text-lg md:text-2xl">
-          Hi! Welcome to your first Next.js site.
-        </h2>
+        <div className="flex justify-between w-full px-2 py-4 border-2 border-gray-200 rounded">
+          <h2>I'm a recipient, please donate!</h2>
+          <button>Donate</button>
+        </div>
       </div>
     </Layout>
   );
