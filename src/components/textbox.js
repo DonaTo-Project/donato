@@ -1,4 +1,4 @@
-function TextBox({ label, value, onChange, ...props }) {
+function TextBox({ label, value, onChange, error, ...props }) {
   return (
     <div className="flex flex-col">
       <label>{label}</label>
@@ -9,6 +9,7 @@ function TextBox({ label, value, onChange, ...props }) {
         value={value}
         {...props}
       />
+      {error !== "" && <span className="text-sm text-red-700">{error}</span>}
     </div>
   );
 }

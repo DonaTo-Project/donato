@@ -1,4 +1,4 @@
-import Header from "./header";
+import Header from "./Header";
 
 function Layout(props) {
   return (

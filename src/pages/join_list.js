@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-import Layout from "../components/layout";
-import TextBox from "../components/textbox";
-import TextArea from "../components/textarea";
+import Layout from "../components/Layout";
+import TextBox from "../components/TextBox";
+import TextArea from "../components/TextArea";
 import SegmentedButton from "../components/SegmentedButton";
 
 function JoinList() {
@@ -12,15 +12,84 @@ function JoinList() {
     category: "SME",
     fiscalId: "",
   });
+  const [validationErrors, setValidationErrors] = useState({
+    name: "",
+    description: "",
+    fiscalId: "",
+  });
 
   function handleFieldChange(field, value) {
     setRequestor({ ...requestor, [field]: value });
   }
 
+  useEffect(() => {
+    if (requestor.fiscalId.trim() === "") {
+      setValidationErrors((validationErrors) => {
+        return {
+          ...validationErrors,
+          fiscalId: `Please insert a valid ${
+            requestor.category !== "No profit association"
+              ? "VAT number"
+              : "fiscal code"
+          } so that we can correctly verify you`,
+        };
+      });
+    }
+  }, [requestor.category]);
+
+  useEffect(() => setValidationErrors({ ...validationErrors, name: "" }), [
+    requestor.name,
+  ]);
+  useEffect(
+    () => setValidationErrors({ ...validationErrors, description: "" }),
+    [requestor.description]
+  );
+  useEffect(() => setValidationErrors({ ...validationErrors, fiscalId: "" }), [
+    requestor.fiscalId,
+  ]);
+
   function handleFormSubmit(e) {
     e.preventDefault();
 
-    console.log("breh");
+    let hasErrored = false;
+    if (requestor.name.trim() === "") {
+      setValidationErrors((validationErrors) => {
+        return {
+          ...validationErrors,
+          name: "Please insert a valid name",
+        };
+      });
+      hasErrored = true;
+    }
+
+    if (requestor.description.trim() === "") {
+      setValidationErrors((validationErrors) => {
+        return {
+          ...validationErrors,
+          description:
+            "Please insert some description, so that donors can know you better",
+        };
+      });
+      hasErrored = true;
+    }
+
+    if (requestor.fiscalId.trim() === "") {
+      setValidationErrors((validationErrors) => {
+        return {
+          ...validationErrors,
+          fiscalId: `Please insert a valid ${
+            requestor.category !== "No profit association"
+              ? "VAT number"
+              : "fiscal code"
+          } so that we can correctly verify you`,
+        };
+      });
+      hasErrored = true;
+    }
+
+    if (!hasErrored) {
+      console.log("Submitted");
+    }
   }
 
   return (
@@ -41,6 +110,7 @@ function JoinList() {
               value={requestor.name}
               onChange={(e) => handleFieldChange("name", e.target.value)}
               label="Who are you?"
+              error={validationErrors.name}
             />
             <SegmentedButton
               label="In which category do you fall into?"
@@ -56,6 +126,7 @@ function JoinList() {
               value={requestor.description}
               onChange={(e) => handleFieldChange("description", e.target.value)}
               label="What do you do?"
+              error={validationErrors.description}
             />
             <TextBox
               value={requestor.fiscalId}
@@ -65,6 +136,7 @@ function JoinList() {
                   ? "VAT number"
                   : "fiscal code"
               }`}
+              error={validationErrors.fiscalId}
             />
             <button
               type="submit"
