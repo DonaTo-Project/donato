@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 import Layout from "../components/Layout";
 import TextBox from "../components/TextBox";
@@ -8,6 +9,8 @@ import Select from "../components/Select";
 import Button from "../components/Button";
 
 function JoinList() {
+  const user = useSelector((state) => state.user);
+
   const [requestor, setRequestor] = useState({
     name: "",
     description: "",
@@ -122,51 +125,57 @@ function JoinList() {
           onSubmit={handleFormSubmit}
         >
           <h2 className="mb-3 text-lg font-bold">Hi!</h2>
-          <div className="flex flex-col space-y-4">
-            <TextBox
-              value={requestor.name}
-              onChange={(e) => handleFieldChange("name", e.target.value)}
-              label="Who are you?"
-              error={validationErrors.name}
-            />
-            <SegmentedButton
-              label="In which category do you fall into?"
-              selected={requestor.category}
-              options={[
-                "SME",
-                "Commercial association",
-                "No profit association",
-              ]}
-              onChange={(option) => handleFieldChange("category", option)}
-            />
-            <TextArea
-              value={requestor.description}
-              onChange={(e) => handleFieldChange("description", e.target.value)}
-              label="What do you do?"
-              error={validationErrors.description}
-            />
-            <Select
-              value={requestor.countryId}
-              onChange={({ label, value }) => {
-                handleFieldChange("countryId", value);
-              }}
-              label="Your country"
-              error={validationErrors.countryId}
-            />
-            <TextBox
-              value={requestor.fiscalId}
-              onChange={(e) => handleFieldChange("fiscalId", e.target.value)}
-              label={`Your ${
-                requestor.category !== "No profit association"
-                  ? "VAT number"
-                  : "fiscal code"
-              }`}
-              error={validationErrors.fiscalId}
-            />
-            <Button type="submit" variant="primary">
-              Submit application
-            </Button>
-          </div>
+          {user.address === "" ? (
+            "First of all, please login!"
+          ) : (
+            <div className="flex flex-col space-y-4">
+              <TextBox
+                value={requestor.name}
+                onChange={(e) => handleFieldChange("name", e.target.value)}
+                label="Who are you?"
+                error={validationErrors.name}
+              />
+              <SegmentedButton
+                label="In which category do you fall into?"
+                selected={requestor.category}
+                options={[
+                  "SME",
+                  "Commercial association",
+                  "No profit association",
+                ]}
+                onChange={(option) => handleFieldChange("category", option)}
+              />
+              <TextArea
+                value={requestor.description}
+                onChange={(e) =>
+                  handleFieldChange("description", e.target.value)
+                }
+                label="What do you do?"
+                error={validationErrors.description}
+              />
+              <Select
+                value={requestor.countryId}
+                onChange={({ label, value }) => {
+                  handleFieldChange("countryId", value);
+                }}
+                label="Your country"
+                error={validationErrors.countryId}
+              />
+              <TextBox
+                value={requestor.fiscalId}
+                onChange={(e) => handleFieldChange("fiscalId", e.target.value)}
+                label={`Your ${
+                  requestor.category !== "No profit association"
+                    ? "VAT number"
+                    : "fiscal code"
+                }`}
+                error={validationErrors.fiscalId}
+              />
+              <Button type="submit" variant="primary">
+                Submit application
+              </Button>
+            </div>
+          )}
         </form>
       </div>
     </Layout>

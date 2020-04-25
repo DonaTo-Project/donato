@@ -29,12 +29,8 @@ function Header() {
     const decimal = await tokenContract.methods.decimals().call();
     const balance = await tokenContract.methods.balanceOf(address).call();
 
-    console.log(balance);
-
     const adjustedBalance = balance / Math.pow(10, decimal);
     const tokenName = await tokenContract.methods.name().call();
-
-    console.log(tokenName);
 
     return { address, balance };
   }
@@ -46,8 +42,9 @@ function Header() {
 
       let isUserLoggedIn = await fm.user.isLoggedIn();
       if (isUserLoggedIn) {
+        const { email } = await fm.user.getUser();
         const { address, balance } = await getUserAddressAndCoinBalance();
-        await dispatch(updateUser({ address, balance }));
+        await dispatch(updateUser({ address, balance, email }));
       }
     })();
   }, []);
@@ -61,11 +58,12 @@ function Header() {
 
       let isUserLoggedIn = await fm.user.isLoggedIn();
       if (!isUserLoggedIn) {
+        const { email } = await fm.user.getUser();
         const { address, balance } = await getUserAddressAndCoinBalance();
-        await dispatch(updateUser({ address, balance }));
+        await dispatch(updateUser({ address, balance, email }));
       } else {
         await fm.user.logout();
-        await dispatch(updateUser({ address: "", balance: 0 }));
+        await dispatch(updateUser({ address: "", balance: 0, email: "" }));
       }
     } catch (err) {
       console.log("AAAAA");
