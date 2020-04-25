@@ -3,9 +3,10 @@ pragma solidity ^0.5.0;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./DonatoReceiver.sol";
+import "./AdminRole.sol";
 import "./ERC20Mintable.sol";//MoonPayToken Contract
 
-contract Donato is Ownable {
+contract Donato is Ownable, AdminRole {
 		
 	//Contract settings:
 
@@ -57,12 +58,12 @@ contract Donato is Ownable {
   	emit ApplicationReceived(msg.sender, _name, _VAT);
 	}
 
-	function getPendingAddresses() external view onlyOwner returns (address[] memory) {
+	function getPendingAddresses() external view onlyAdmin returns (address[] memory) {
 		require(pendingAddresses.length > 0, "No pending addresses for the moment");
 		return pendingAddresses;
 	}
 
-	function getPendingCandidateData(address _candidateAddress) external view onlyOwner returns(
+	function getPendingCandidateData(address _candidateAddress) external view onlyAdmin returns(
 		string memory name,
 		string memory category,
 		string memory description,
@@ -79,7 +80,7 @@ contract Donato is Ownable {
   	);
 	}
 
-	function evaluateCandidate(address payable _candidateAddress, bool _validation) external onlyOwner{
+	function evaluateCandidate(address payable _candidateAddress, bool _validation) external onlyAdmin{
   	require(candidatesList[_candidateAddress].exists == true, "This address doesn't match with any pending candidate");
  		if (_validation == true) {
   		newReceiver = new DonatoReceiver(

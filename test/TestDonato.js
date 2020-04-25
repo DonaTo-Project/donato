@@ -41,6 +41,24 @@ contract("Donato", function(accounts){
     });
 
 
+    //Test add new admin
+    it("Check Donato contract addAdmin() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+        const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
+
+        //Verifying onlyAdmin modifier
+        await expectRevert(this.DonatoInstance.evaluateCandidate(receiver, true, {from: donator1}),"AdminRole: caller does not have the Admin role");
+
+        //ADD donator1 as an admin
+        await this.DonatoInstance.addAdmin(donator1, {from: donatoContractOwner});
+
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donator1});
+
+        const afterReceiverCount = await this.DonatoInstance.receiverCount.call();
+        expect(afterReceiverCount).to.be.bignumber.equal(initialReceiverCount.add(new BN('1')));
+    });
+
+
     //Test sendApplication function
     it("Check sendApplication() function", async function() {
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});

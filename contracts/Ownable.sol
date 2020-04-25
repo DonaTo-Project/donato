@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity >=0.4.25 <0.7.0;
 
 import "./Context.sol";
 /**
