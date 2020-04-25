@@ -1,10 +1,9 @@
-pragma solidity >=0.4.25 <0.7.0;
+pragma solidity ^0.5.0;
 
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./DonatoReceiver.sol";
-import "./TokenERC20Dai.sol";//Need DAI contract, this one is a test one
-
+import "./ERC20Mintable.sol";//MoonPayToken Contract
 
 contract Donato is Ownable {
 		
@@ -42,8 +41,6 @@ contract Donato is Ownable {
     receiverCount = 0;//Initialize receivers id count to 0
     tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as paramater
   }
-
-  receive() external payable {}//Enable the contract to receive ETH (in case)
 
 
   //Contract functions:

@@ -1,3 +1,6 @@
+require('dotenv').config();
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+
 module.exports = {
   // Uncommenting the defaults below
   // provides for an easier quick-start with Ganache.
@@ -6,6 +9,12 @@ module.exports = {
   // for more details on how to specify configuration options!
   //
   networks: {
+    ropsten: {
+      provider: () => new HDWalletProvider(
+        process.env.MNEMONIC,
+        process.env.ROPSTEN_URL),
+      network_id: 3
+    },
     development: {
       host: "127.0.0.1",
       port: 7545,
@@ -20,7 +29,7 @@ module.exports = {
   //},
   compilers: {
     solc: {
-      version: "0.6.2", // ex:  "0.4.20". (Default: Truffle's installed solc)
+      version: "0.5.0", // ex:  "0.4.20". (Default: Truffle's installed solc)
     },
   },
 };

@@ -1,7 +1,7 @@
 const { BN, ether, expectRevert } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
 const Donato = artifacts.require("Donato");
-const TokenERC20Dai = artifacts.require("TokenERC20Dai");
+const ERC20Mintable = artifacts.require("ERC20Mintable");
 const DonatoReceiver = artifacts.require("DonatoReceiver");
 
 
@@ -15,7 +15,7 @@ contract("Donato", function(accounts){
 
     //Before each unit test  
     beforeEach(async function() {
-        this.TokenERC20DaiInstance = await TokenERC20Dai.new({from: donator1});
+        this.TokenERC20DaiInstance = await ERC20Mintable.new({from: donator1});
         this.DonatoInstance = await Donato.new(this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
     });
 
