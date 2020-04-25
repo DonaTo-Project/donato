@@ -23,6 +23,7 @@
   "dependencies": {
     "3box": "^1.18.1",
     "axios": "^0.19.2",
+    "ethereumjs-tx": "^2.1.2",
     "fortmatic": "^2.0.6",
     "next": "9.3.5",
     "react": "16.13.1",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "2.1.2",
+    "@openzeppelin/test-helpers": "^0.5.5",
     "autoprefixer": "9.7.6",
     "dotenv-cli": "^3.1.0",
     "redux-devtools-extension": "^2.13.8",
