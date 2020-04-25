@@ -4,19 +4,21 @@ import Layout from "../components/Layout";
 import TextBox from "../components/TextBox";
 import TextArea from "../components/TextArea";
 import SegmentedButton from "../components/SegmentedButton";
+import Select from "../components/Select";
+import Button from "../components/Button";
 
 function JoinList() {
   const [requestor, setRequestor] = useState({
     name: "",
     description: "",
-    country: "",
+    countryId: "",
     category: "SME",
     fiscalId: "",
   });
   const [validationErrors, setValidationErrors] = useState({
     name: "",
     description: "",
-    country: "",
+    countryId: "",
     fiscalId: "",
   });
 
@@ -46,6 +48,9 @@ function JoinList() {
     () => setValidationErrors({ ...validationErrors, description: "" }),
     [requestor.description]
   );
+  useEffect(() => setValidationErrors({ ...validationErrors, countryId: "" }), [
+    requestor.countryId,
+  ]);
   useEffect(() => setValidationErrors({ ...validationErrors, fiscalId: "" }), [
     requestor.fiscalId,
   ]);
@@ -84,6 +89,16 @@ function JoinList() {
               ? "VAT number"
               : "fiscal code"
           } so that we can correctly verify you`,
+        };
+      });
+      hasErrored = true;
+    }
+
+    if (requestor.countryId.trim() === "") {
+      setValidationErrors((validationErrors) => {
+        return {
+          ...validationErrors,
+          countryId: `Please select a valid country`,
         };
       });
       hasErrored = true;
@@ -130,10 +145,12 @@ function JoinList() {
               label="What do you do?"
               error={validationErrors.description}
             />
-            <TextBox
+            <Select
               value={requestor.countryId}
-              onChange={(e) => handleFieldChange("countryId", e.target.value)}
-              label="Your country ID (IT, FR...)"
+              onChange={({ label, value }) => {
+                handleFieldChange("countryId", value);
+              }}
+              label="Your country"
               error={validationErrors.countryId}
             />
             <TextBox
@@ -146,12 +163,9 @@ function JoinList() {
               }`}
               error={validationErrors.fiscalId}
             />
-            <button
-              type="submit"
-              className="w-full p-2 text-white bg-purple-700 rounded-md sm:w-1/2 md:w-1/4 hover:bg-purple-600"
-            >
+            <Button type="submit" variant="primary">
               Submit application
-            </button>
+            </Button>
           </div>
         </form>
       </div>

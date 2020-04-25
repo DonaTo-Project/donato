@@ -1,7 +1,7 @@
 function SegmentedButton({ label, selected, options, onChange }) {
   return (
     <div className="flex flex-col">
-      <label>{label}</label>
+      {label && <label>{label}</label>}
       <div className="flex flex-row">
         {options.map((option, i) => {
           let roundness = "";

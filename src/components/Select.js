@@ -2,9 +2,13 @@ import ReactSelect from "react-select";
 
 import countries from "../utils/countries.json";
 
-function Select({ selected, onChange }) {
+function Select({ selected, label, error, onChange }) {
   return (
-    <ReactSelect value={selected} onChange={onChange} options={countries} />
+    <div className="flex flex-col">
+      <label>{label}</label>
+      <ReactSelect value={selected} onChange={onChange} options={countries} />
+      {error !== "" && <span className="text-sm text-red-700">{error}</span>}
+    </div>
   );
 }
 

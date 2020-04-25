@@ -1,6 +1,7 @@
 import Layout from "../components/Layout";
 import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
+import Button from "../components/Button";
 
 function Home(props) {
   const campaigns = useSelector((state) => state.campaigns);
@@ -39,13 +40,13 @@ function Home(props) {
                   {campaign.balance} € already donated
                 </span>
               </div>
-              <button
+              <Button
                 type="button"
-                className="p-2 rounded-md hover:bg-gray-200"
+                variant="text"
                 onClick={() => redirectToPayment(campaign.address)}
               >
                 Donate
-              </button>
+              </Button>
             </div>
           ))}
         </div>
