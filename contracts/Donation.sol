@@ -44,20 +44,22 @@ contract Donato is Ownable, AdminRole {
     pendingIndex = 0;
     activeIndex = 0;
     receiverCount = 0;
-    tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as paramater
+    tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as parameter
   }
 
 
   //Contract functions:
 
 	function sendApplication(string calldata _name, string calldata _category, string calldata _description, string calldata _country, string calldata _VAT) external {
-  	require(countryVATList[_country][_VAT] != true, "VAT number already used");
+  	require(bytes(_name).length != 0 && bytes(_category).length != 0 && bytes(_country).length != 0 && bytes(_VAT).length != 0, "Name, Category, Country and VAT number can't be empty");
+    require(countryVATList[_country][_VAT] != true, "VAT number already used");
   	require(candidatesList[msg.sender].exists != true, "This address is already used in the pending list");
 
   	candidatesList[msg.sender] = Candidate(true, _name, _category, _description, _country, _VAT);
   	pendingIndexList[msg.sender] = pendingIndex;
   	pendingAddresses.push(msg.sender);
   	pendingIndex = pendingIndex.add(1);
+    countryVATList[_country][_VAT] = true;
 
   	emit ApplicationReceived(msg.sender, _name, _VAT);
 	}
@@ -90,6 +92,7 @@ contract Donato is Ownable, AdminRole {
 	}
 
 	function evaluateCandidate(address payable _candidateAddress, bool _validation) external onlyAdmin{
+    require(msg.sender != address(0), "Address 0 calling");
   	require(candidatesList[_candidateAddress].exists == true, "This address doesn't match with any pending candidate");
  		if (_validation == true) {
   		newReceiver = new DonatoReceiver(

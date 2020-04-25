@@ -38,6 +38,7 @@ contract DonatoReceiver {
 
   //Send receiver's balance
   function withdrawCall() external {
+    require(msg.sender != address(0), "Address 0 calling");
   	require(msg.sender == _owner, "Caller is not the owner");
   	//Instantiate DAI contract
   	ERC20Detailed TokenDAI = ERC20Detailed(tokenContractAddress);
