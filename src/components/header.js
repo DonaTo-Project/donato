@@ -7,6 +7,9 @@ import { useSelector, useDispatch } from "react-redux";
 
 import { updateUser } from "../state/user/actions";
 
+import adminAddresses from "../utils/adminAddresses";
+import recipientsAddresses from "../utils/recipientsAddresses";
+
 function Header() {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -77,7 +80,6 @@ function Header() {
           {[
             { title: "Home", route: "/" },
             { title: "About", route: "/about" },
-            { title: "Want to receive donations?", route: "/join_list" },
           ].map((navigationItem) => (
             <li className="mt-3 md:mt-0 md:ml-6" key={navigationItem.title}>
               <Link href={navigationItem.route}>
@@ -85,6 +87,30 @@ function Header() {
               </Link>
             </li>
           ))}
+          {!adminAddresses.includes(user.address) && (
+            <li
+              className="mt-3 md:mt-0 md:ml-6"
+              key="Want to receive donations?"
+            >
+              <Link href="/join_list">
+                <a className="block text-white">Want to receive donations?</a>
+              </Link>
+            </li>
+          )}
+          {adminAddresses.includes(user.address) && (
+            <li className="mt-3 md:mt-0 md:ml-6" key="acceptOrg">
+              <Link href="/accept_requests">
+                <a className="block text-white">View requests</a>
+              </Link>
+            </li>
+          )}
+          {recipientsAddresses.includes(user.address) && (
+            <li className="mt-3 md:mt-0 md:ml-6" key="dashboard">
+              <Link href="/dashboard">
+                <a className="block text-white">Your balance</a>
+              </Link>
+            </li>
+          )}
           <li className="mt-3 md:mt-0 md:ml-6" key="login">
             <button onClick={changeUserAuthStatus} className="block text-white">
               {user.address === "" ? "Login" : "Logout"}
