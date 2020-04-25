@@ -26,7 +26,7 @@ contract("Donato", function(accounts){
         expect(await this.DonatoInstance.owner()).to.equal(donatoContractOwner);
 
         //Check initial receiver count = 0
-        let initialReceiverCount = await this.DonatoInstance.receiverCount.call();
+        const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
         expect(initialReceiverCount).to.be.bignumber.equal(new BN('0'));
     });
 
@@ -41,52 +41,73 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test createReceiver function
-    it("Check createReceiver() function", async function() {
+    //Test sendApplication function
+    it("Check sendApplication() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+
+        const recipientAddress = await this.DonatoInstance.pendingAddresses.call(0);
+        expect(recipientAddress).to.equal(receiver);
+
+        const recipientStruct = await this.DonatoInstance.candidatesList.call(receiver);
+        expect(recipientStruct.name).to.equal("Il Buono");
+    });
+
+    //Test getPendingAddress function
+    it("Check getPendingAddresses() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+        await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
+
+        const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+        expect(pendingAddressesArray[0]).to.equal(receiver);
+        expect(pendingAddressesArray[1]).to.equal(accounts[5]);
+    });
+
+    //Test getPendingCandidateData function
+    it("Check getPendingCandidateData() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+
+        const pendingCandidateData = await this.DonatoInstance.getPendingCandidateData(receiver, {from: donatoContractOwner});
+        expect(pendingCandidateData.name).to.equal("Il Buono");
+        expect(pendingCandidateData.category).to.equal("SME");
+        expect(pendingCandidateData.description).to.equal("Ristorante");
+        expect(pendingCandidateData.country).to.equal("IT");
+        expect(pendingCandidateData.VAT).to.equal("00547700489");
+    });
+
+    //Test evaluateCandidate function
+    it("Check evaluateCandidate() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+
         //Save initial receiver count
-        let initialReceiverCount = await this.DonatoInstance.receiverCount.call();
+        const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
 
-        //Create receiver
-        await this.DonatoInstance.createReceiver("La Campagnola", "Italy", "00547700489", {from: donatoContractOwner});
-        let afterReceiverCount = await this.DonatoInstance.receiverCount.call();
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
 
-        //Check receiver count incrementation after creation
+        const afterReceiverCount = await this.DonatoInstance.receiverCount.call();
         expect(afterReceiverCount).to.be.bignumber.equal(initialReceiverCount.add(new BN('1')));
 
-        let newReceiverAddress = await this.DonatoInstance.receiversAddresses.call(1);
-        console.log("DonatoReceiver created at: ",newReceiverAddress);
-
-        //Check impossible use of same National Id number for creation
-        await expectRevert(this.DonatoInstance.createReceiver("La Campagnola2", "Italy", "00547700489", {from: donatoContractOwner}),"National Id already used");
+        const pendingAddressesArrayAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+        expect(pendingAddressesArrayAfter[0]).to.equal('0x0000000000000000000000000000000000000000');
     });
 
+    //Test receiverContract can receive DAI tokens
+    it("Check sending DAI to receiver function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
 
-    //Test get Receiver address function
-    it("Check getReceiverAddress() function", async function() {
-        //Create receiver
-        await this.DonatoInstance.createReceiver("La Campagnola", "Italy", "00547700489", {from: donatoContractOwner});
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
 
-        let receiverAddress = await this.DonatoInstance.getReceiverAddress(1);
-        console.log(receiverAddress);
-    });
-
-
-    //Test receiver can receive DAI tokens
-    it("Check sending DAI to receiver and getReceiverBalance() function", async function() {
-        //Create receiver
-        await this.DonatoInstance.createReceiver("La Campagnola", "Italy", "00547700489", {from: donatoContractOwner});
         //Save receiver address
-        let newReceiverAddress = await this.DonatoInstance.receiversAddresses.call(1);
+        const newReceiverContractAddress = await this.DonatoInstance.receiversContractAddresses.call(receiver);
         
         //Save initial DAI balance
-        let initialReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverAddress);
+        const initialReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
 
         //Transfer DAI to receiver
-        let fundAmount = new BN('50')
-        await this.TokenERC20DaiInstance.transfer(newReceiverAddress, fundAmount, {from: donator1});
+        const fundAmount = new BN('50')
+        await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
 
         //Save new DAI balance
-        let afterReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverAddress);
+        const afterReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
 
         //Compare two balances
         expect(afterReceiverBalance).to.be.bignumber.equal(initialReceiverBalance.add(fundAmount));
@@ -96,28 +117,28 @@ contract("Donato", function(accounts){
     //Test withdrawCall() function that send receiver funds to Donato owner
     it("Check withdrawCall() function", async function() {
         //Create receiver
-        this.DonatoReceiverInstance = await DonatoReceiver.new("La Campagnola", "Italy", "00547700489", {from: donatoContractOwner});
+        this.DonatoReceiverInstance = await DonatoReceiver.new(receiver, "La Campagnola", "SME", "Ristorante", "IT", "00547700489", this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
         //Save receiver address
-        const newReceiverAddress = await this.DonatoReceiverInstance.address;
+        const newReceiverContractAddress = await this.DonatoReceiverInstance.address;
 
         //Transfer DAI to receiver
         let fundAmount = new BN('50')
-        await this.TokenERC20DaiInstance.transfer(newReceiverAddress, fundAmount, {from: donator1});
+        await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
 
         //Save receiver and donatoContractOwner DAI balance
-        let beforeWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverAddress);
+        let beforeWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
         console.log("Receiver initial balance: ", parseInt(beforeWithdrawReceiverBalance), "DAI");
         let beforeWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
         console.log("Doanto owner initial balance: ", parseInt(beforeWithdrawDonatoBalance), "DAI");
 
         //Check owner only can call withdraw function
-        await expectRevert(this.DonatoReceiverInstance.withdrawCall(this.TokenERC20DaiInstance.address, {from: hacker}),"Ownable: caller is not the owner");
+        await expectRevert(this.DonatoReceiverInstance.withdrawCall({from: hacker}),"Caller is not the owner");
 
         //Withdraw
-        await this.DonatoReceiverInstance.withdrawCall(this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
+        await this.DonatoReceiverInstance.withdrawCall({from: receiver});
 
         //Save DAI balance
-        let afterWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverAddress);
+        let afterWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
         console.log("Receiver after balance: ", parseInt(afterWithdrawReceiverBalance), "DAI");
         let afterWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
         console.log("Donato owner after balance: ", parseInt(afterWithdrawDonatoBalance), "DAI");
@@ -126,23 +147,4 @@ contract("Donato", function(accounts){
         expect(afterWithdrawReceiverBalance).to.be.bignumber.equal(beforeWithdrawReceiverBalance.sub(fundAmount));
         expect(afterWithdrawDonatoBalance).to.be.bignumber.equal(beforeWithdrawDonatoBalance.add(fundAmount));
     });
-
-
-    // //Test the 3 receiver status functions
-    // it("Check getReceiverStatus(), deactivateReceiver() and reactivateReceiverAgain() function", async function() {
-        
-    //     //Create receiver
-    //     await this.DonatoInstance.createReceiver(receiver, "SME", "La Campagnola", "Villa San Cipriano, 18", "Amatrice", "Italy", "00547700489", {from: donatoContractOwner});
-    //     let receiverStatus = await this.DonatoInstance.getReceiverStatus(1);
-    //     expect(receiverStatus).to.equal(true);
-
-    //     await this.DonatoInstance.deactivateReceiver(1);
-    //     receiverStatus = await this.DonatoInstance.getReceiverStatus(1);
-    //     expect(receiverStatus).to.equal(false);
-
-    //     await this.DonatoInstance.reactivateReceiverAgain(1);
-    //     receiverStatus = await this.DonatoInstance.getReceiverStatus(1);
-    //     expect(receiverStatus).to.equal(true);
-    // });
-
 });
