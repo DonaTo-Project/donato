@@ -9,12 +9,14 @@ function JoinList() {
   const [requestor, setRequestor] = useState({
     name: "",
     description: "",
+    country: "",
     category: "SME",
     fiscalId: "",
   });
   const [validationErrors, setValidationErrors] = useState({
     name: "",
     description: "",
+    country: "",
     fiscalId: "",
   });
 
@@ -127,6 +129,12 @@ function JoinList() {
               onChange={(e) => handleFieldChange("description", e.target.value)}
               label="What do you do?"
               error={validationErrors.description}
+            />
+            <TextBox
+              value={requestor.countryId}
+              onChange={(e) => handleFieldChange("countryId", e.target.value)}
+              label="Your country ID (IT, FR...)"
+              error={validationErrors.countryId}
             />
             <TextBox
               value={requestor.fiscalId}
