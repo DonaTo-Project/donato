@@ -1,33 +1,39 @@
 pragma solidity >=0.4.25 <0.7.0;
 
-import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./TokenERC20Dai.sol";//Need DAI contract, this one is a test one
 
 /// @title DonaToReceiver contract
 /// @notice 
 /// @dev 
-contract DonatoReceiver is Ownable {
+contract DonatoReceiver {
 		
 		//Contract settings:
 			using SafeMath for uint;
 
+			address payable private donatoOwner;
 	    address payable private _owner;
-
+	    address tokenContractAddress;
     	bool status;
       string name;
+      string category;
+      string description;
       string country;
-      string nationalId;
+      string VAT;
 
       //Events
       event ReceiverWithdrawed(string receiverName, uint amountWithdrawed);
 
-	    constructor (string memory _name, string memory _country, string memory _nationalId) payable public {
-	      _owner = msg.sender;
+	    constructor (address payable _candidateAddress, string memory _name, string memory _category, string memory _description, string memory _country, string memory _VAT, address _tokenAddress) payable public {
+	      donatoOwner = msg.sender;
+	      _owner = _candidateAddress;
+	      tokenContractAddress = _tokenAddress;
 	      status = true;
 	      name = _name;
+	      category = _category;
+	      description = _description;
 	      country = _country;
-	      nationalId = _nationalId;
+	      VAT = _VAT;
 	    }
 
 	    //Enable the contract to receive ETH (in case)
@@ -37,16 +43,16 @@ contract DonatoReceiver is Ownable {
 	  //Contract functions:
 
 	    //Send receiver's balance
-	    function withdrawCall(address DAIContractAddress) external onlyOwner {
-
+	    function withdrawCall() external {
+	    	require(msg.sender == _owner, "Caller is not the owner");
 	    	//Instantiate DAI contract
-	    	TokenERC20Dai TokenDAI = TokenERC20Dai(DAIContractAddress);
-				uint256 DAIbalance = TokenDAI.balanceOf(address(this));
-	    	require(DAIbalance > 0, "Receiver's balance is empty");
+	    	TokenERC20Dai TokenDAI = TokenERC20Dai(tokenContractAddress);
+				uint256 tokenbalance = TokenDAI.balanceOf(address(this));
+	    	require(tokenbalance > 0, "Receiver's balance is empty");
 				
-	      TokenDAI.transfer(_owner, DAIbalance);
+	      TokenDAI.transfer(donatoOwner, tokenbalance);
 
-	      emit ReceiverWithdrawed(name, DAIbalance);
+	      emit ReceiverWithdrawed(name, tokenbalance);
 	    }
 
 }

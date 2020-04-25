@@ -8,111 +8,105 @@ import "./TokenERC20Dai.sol";//Need DAI contract, this one is a test one
 
 contract Donato is Ownable {
 		
-		//Contract settings:
-			using SafeMath for uint;
+	//Contract settings:
 
-	    address payable private _owner;
-	    uint public receiverCount;//Number of receivers created, also used as each receiver Id
-	    address public DAIContractAddress;
-	    // address public receiverAddress;
+	using SafeMath for uint;
+  DonatoReceiver public newReceiver;
 
-	    DonatoReceiver public newReceiver;
+  address payable private _owner;
+  address public tokenContractAddress;
+  uint public index;
+  uint public receiverCount;//Number of receivers created, also used as each receiver Id
+  struct Candidate {
+  	bool exists;
+    string name;
+    string category;
+    string description;
+    string country;
+    string VAT;
+	}
 
-	    //List of receivers
-	    mapping (uint => DonatoReceiver) public receiversAddresses;
-	    // mapping (uint => address) public receiversAddresses;
-	    
-	    //List of National Id numbers per country already given to avoid double subscription with same National Id number
-	    mapping (string => mapping (string => bool)) private countryNationalIdList;
+  mapping (address => Candidate) public candidatesList;
+	address[] public pendingAddresses;
+	mapping (address => uint) public pendingIndexList;
+  mapping (address => address) public receiversContractAddresses;//List of receivers contract's addresses
+  mapping (string => mapping (string => bool)) private countryVATList;//Mapping of VAT numbers per country, used to avoid double subscription with same VAT number
 
-	    //Events
-	    event ReceiverCreated(uint receiverId, string name, string country, string nationalId);
-	    // event ReceiverDeactivated(uint receiverId, bool status);
-	    // event ReceiverReactivated(uint receiverId, bool status);
+  //Events
+  event ApplicationReceived(address candidateAddress, string name, string VAT);
+  event ReceiverCreated(address candidateAddress, string name, string category, string description, string country, string VAT);
 
-	    constructor (address _DAIContractAddress) payable public {
-	      _owner = msg.sender;
+  constructor (address _tokenContractAddress) payable public {
+    _owner = msg.sender;
+    index = 0;
+    receiverCount = 0;//Initialize receivers id count to 0
+    tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as paramater
+  }
 
-	      //Initialize receivers id count to 0
-	      receiverCount = 0;
-
-	      //Save DAI contract address sent as paramater
-	      DAIContractAddress = _DAIContractAddress;
-	    }
-
-	    //Enable the contract to receive ETH (in case)
-	    receive() external payable {}
-
-
-
-    //Contract functions:
-
-	    //Creates a receiver struct with all parameters
-	    function createReceiver(string calldata _name, string calldata _country, string calldata _nationalId) external onlyOwner {
-	    	require(countryNationalIdList[_country][_nationalId] != true, "National Id already used");
-
-	    	//Increment receiverCount
-	    	receiverCount = receiverCount.add(1);
-
-	    	//Create new DonatoReceiver contract
-	    	newReceiver = new DonatoReceiver(_name, _country, _nationalId);
-
-	    	//Add new contract to mapping
-	    	// receivers[receiverCount] = newReceiver;
-
-	    	//Add new contract address to mapping
-	    	receiversAddresses[receiverCount] = newReceiver;
-
-	    	//Save country X national id combination	
-	    	countryNationalIdList[_country][_nationalId] = true;
-
-	    	//Emit event
-	    	emit ReceiverCreated(receiverCount, _name, _country, _nationalId);
-	    }
+  receive() external payable {}//Enable the contract to receive ETH (in case)
 
 
-	    //Send all receiver data
-	    function getReceiverAddress(uint _receiverId) view external returns(DonatoReceiver receiverInformations) {
-	    	require(_receiverId <= receiverCount, "Receiver Id doesn't exists");
+  //Contract functions:
 
-	    	return (receiversAddresses[_receiverId]);
-	    }
+	function sendApplication(string calldata _name, string calldata _category, string calldata _description, string calldata _country, string calldata _VAT) external {
+  	require(countryVATList[_country][_VAT] != true, "VAT number already used");
+  	require(candidatesList[msg.sender].exists != true, "This address is already used in the pending list");
 
+  	candidatesList[msg.sender] = Candidate(true, _name, _category, _description, _country, _VAT);
+  	pendingIndexList[msg.sender] = index;
+  	pendingAddresses.push(msg.sender);
+  	index = index.add(1);
 
-	    //Return receiver's balance
-	   //  function getReceiverBalance(uint _receiverId) view external returns(uint receiverBalance){
-	   //  	require(_receiverId <= receiverCount, "Receiver Id doesn't exists");
+  	emit ApplicationReceived(msg.sender, _name, _VAT);
+	}
 
-	   //  	//Instantiate DAI contract
-	   //  	TokenERC20Dai TokenDAI = TokenERC20Dai(DAIContractAddress);
-				// uint256 DAIbalance = TokenDAI.balanceOf(receiversAddresses[_receiverId]);
+	function getPendingAddresses() external view onlyOwner returns (address[] memory) {
+		require(pendingAddresses.length > 0, "No pending addresses for the moment");
+		return pendingAddresses;
+	}
 
-	   //  	return DAIbalance;
-	   //  }
+	function getPendingCandidateData(address _candidateAddress) external view onlyOwner returns(
+		string memory name,
+		string memory category,
+		string memory description,
+		string memory country,
+		string memory VAT
+	){
+  	require(candidatesList[_candidateAddress].exists == true, "This address doesn't match with any pending candidate");
+  	return (
+  		candidatesList[_candidateAddress].name,
+  		candidatesList[_candidateAddress].category,
+  		candidatesList[_candidateAddress].description,
+  		candidatesList[_candidateAddress].country,
+  		candidatesList[_candidateAddress].VAT
+  	);
+	}
 
-
-	    // //Return receiver's status
-	    // function getReceiverStatus(uint _receiverId) external view returns(bool) {
-	    // 	require(_receiverId >= receiverCount, "Receiver Id doesn't exist");
-
-	    // 	return receivers[_receiverId].status; 
-	    // }
-
-
-	    // //Set receiver's status to false
-	    // function deactivateReceiver(uint _receiverId) external onlyOwner {
-	    // 	require(receivers[_receiverId].status != false, "This receiver is already unactive");
-	    // 	receivers[_receiverId].status = false;
-
-	    // 	emit ReceiverDeactivated(_receiverId, receivers[_receiverId].status);
-	    // }
-
-
-	    // //Set receiver's status to true
-	    // function reactivateReceiverAgain(uint _receiverId) external onlyOwner {
-	    // 	require(receivers[_receiverId].status == false, "This receiver is already active");
-	    // 	receivers[_receiverId].status = true;
-
-	    // 	emit ReceiverReactivated(_receiverId, receivers[_receiverId].status);
-	    // }
+	function evaluateCandidate(address payable _candidateAddress, bool _validation) external onlyOwner{
+  	require(candidatesList[_candidateAddress].exists == true, "This address doesn't match with any pending candidate");
+ 		if (_validation == true) {
+  		newReceiver = new DonatoReceiver(
+  			_candidateAddress,
+  			candidatesList[_candidateAddress].name,
+  			candidatesList[_candidateAddress].category,
+  			candidatesList[_candidateAddress].description,
+  			candidatesList[_candidateAddress].country,
+  			candidatesList[_candidateAddress].VAT,
+  			tokenContractAddress
+  		);
+  		receiverCount = receiverCount.add(1);
+  		receiversContractAddresses[_candidateAddress] = address(newReceiver);
+		}
+		uint indexToDelete = pendingIndexList[_candidateAddress];
+		delete pendingAddresses[indexToDelete];
+		candidatesList[_candidateAddress].exists = false;
+		emit ReceiverCreated(
+			_candidateAddress,
+			candidatesList[_candidateAddress].name,
+			candidatesList[_candidateAddress].category,
+			candidatesList[_candidateAddress].description,
+			candidatesList[_candidateAddress].country,
+			candidatesList[_candidateAddress].VAT
+		);
+	}
 }
