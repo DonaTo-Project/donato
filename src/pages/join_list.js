@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+const Contract = require("@truffle/contract");
 
 import Layout from "../components/Layout";
 import TextBox from "../components/TextBox";
@@ -7,6 +8,8 @@ import TextArea from "../components/TextArea";
 import SegmentedButton from "../components/SegmentedButton";
 import Select from "../components/Select";
 import Button from "../components/Button";
+
+import DonatoContract from "../../build/contracts/Donato.json";
 
 function JoinList() {
   const user = useSelector((state) => state.user);
@@ -58,7 +61,7 @@ function JoinList() {
     requestor.fiscalId,
   ]);
 
-  function handleFormSubmit(e) {
+  async function handleFormSubmit(e) {
     e.preventDefault();
 
     let hasErrored = false;
@@ -108,6 +111,21 @@ function JoinList() {
     }
 
     if (!hasErrored) {
+      let Donato = Contract(DonatoContract);
+      Donato.setProvider(window.web3.currentProvider);
+      let DonatoInstance = await Donato.at(
+        "0x290DcEB0ce348c02D6B96e092F21Abe7BdcF60D7"
+      );
+
+      await DonatoInstance.sendApplication(
+        requestor.name,
+        requestor.category,
+        requestor.description,
+        requestor.countryId,
+        requestor.fiscalId,
+        { from: user.address }
+      );
+
       console.log("Submitted");
     }
   }

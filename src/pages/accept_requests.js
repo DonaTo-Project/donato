@@ -1,8 +1,12 @@
-import Layout from "../components/Layout";
 import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
+const Contract = require("@truffle/contract");
+
+import DonatoContract from "../../build/contracts/Donato.json";
+
 import Button from "../components/Button";
 import SegmentedButton from "../components/SegmentedButton";
+import Layout from "../components/Layout";
 
 const options = ["Add to recipients list", "Cash outs"];
 
@@ -12,34 +16,45 @@ function AcceptRequests(props) {
   const [selectedOption, setSelectedOption] = useState(options[0]);
 
   useEffect(() => {
-    setAddToRecipientsList([
-      {
-        name: "NoProfit",
-        type: "No profit association",
-        description: "We really need money",
-        fiscalId: "123456789",
-      },
-      {
-        name: "Macelleria Amatrice",
-        type: "SME",
-        description:
-          "We're the pride of our town, but due to the earthquake it's really possible that we'll close",
-        fiscalId: "45678919",
-      },
-    ]);
+    (async () => {
+      let Donato = Contract(DonatoContract);
+      Donato.setProvider(window.web3.currentProvider);
+      let DonatoInstance = await Donato.at(
+        "0x290DcEB0ce348c02D6B96e092F21Abe7BdcF60D7"
+      );
 
-    setCashoutsList([
-      {
-        name: "NoProfit",
-        type: "No profit association",
-        amount: 80,
-      },
-      {
-        name: "NoProfit",
-        type: "No profit association",
-        amount: 45,
-      },
-    ]);
+      let pendingAddresses = await DonatoInstance.getPendingAddresses();
+      console.log(pendingAddresses);
+
+      setAddToRecipientsList([
+        {
+          name: "NoProfit",
+          type: "No profit association",
+          description: "We really need money",
+          fiscalId: "123456789",
+        },
+        {
+          name: "Macelleria Amatrice",
+          type: "SME",
+          description:
+            "We're the pride of our town, but due to the earthquake it's really possible that we'll close",
+          fiscalId: "45678919",
+        },
+      ]);
+
+      setCashoutsList([
+        {
+          name: "NoProfit",
+          type: "No profit association",
+          amount: 80,
+        },
+        {
+          name: "NoProfit",
+          type: "No profit association",
+          amount: 45,
+        },
+      ]);
+    })();
   }, []);
 
   function renderRequests() {

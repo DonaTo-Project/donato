@@ -11,6 +11,7 @@ import adminAddresses from "../utils/adminAddresses";
 import recipientsAddresses from "../utils/recipientsAddresses";
 
 import ERC20ABI from "../abis/ERC20.json";
+import Axios from "axios";
 
 const MoonPayTokenContractAddress =
   "0x48b0c1d90c3058ab032c44ec52d98633587ee711";
@@ -60,6 +61,7 @@ function Header() {
       if (!isUserLoggedIn) {
         const { email } = await fm.user.getUser();
         const { address, balance } = await getUserAddressAndCoinBalance();
+        await Axios.get(`/api/${address}/fund`);
         await dispatch(updateUser({ address, balance, email }));
       } else {
         await fm.user.logout();
