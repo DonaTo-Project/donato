@@ -10,64 +10,58 @@ import { updateUser } from "../state/user/actions";
 import adminAddresses from "../utils/adminAddresses";
 import recipientsAddresses from "../utils/recipientsAddresses";
 
+import ERC20ABI from "../abis/ERC20.json";
+
+const MoonPayTokenContractAddress =
+  "0x48b0c1d90c3058ab032c44ec52d98633587ee711";
+
 function Header() {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [isExpanded, toggleExpansion] = useState(false);
 
-  useEffect(
-    () =>
-      (async () => {
-        let fm = new Fortmatic(process.env.FORTMATIC_KEY);
-        window.web3 = new Web3(fm.getProvider());
+  async function getUserAddressAndCoinBalance() {
+    const address = await window.web3.eth.getCoinbase();
+    const tokenContract = new window.web3.eth.Contract(
+      ERC20ABI,
+      MoonPayTokenContractAddress
+    );
+    const decimal = await tokenContract.methods.decimals().call();
+    const balance = await tokenContract.methods.balanceOf(address).call();
 
-        let isUserLoggedIn = await fm.user.isLoggedIn();
-        if (isUserLoggedIn) {
-          const address = await web3.eth.getCoinbase();
-          const balance = await web3.eth.getBalance(address);
+    console.log(balance);
 
-          // const provider = await Box.get3idConnectProvider();
-          // const box = await Box.openBox(coinbase, provider);
+    const adjustedBalance = balance / Math.pow(10, decimal);
+    const tokenName = await tokenContract.methods.name().call();
 
-          // const spaces = ["DonaTo"];
-          // await box.auth(spaces, { address: coinbase });
+    console.log(tokenName);
 
-          // console.log("Started syncing...");
-          // await box.syncDone;
+    return { address, balance };
+  }
 
-          // const nickname = await box.public.get("name");
-          // console.log(nickname);
+  useEffect(() => {
+    (async () => {
+      let fm = new Fortmatic(process.env.FORTMATIC_KEY, "ropsten");
+      window.web3 = new Web3(fm.getProvider());
 
-          await dispatch(updateUser({ address, balance }));
-        }
-      })(),
-    []
-  );
+      let isUserLoggedIn = await fm.user.isLoggedIn();
+      if (isUserLoggedIn) {
+        const { address, balance } = await getUserAddressAndCoinBalance();
+        await dispatch(updateUser({ address, balance }));
+      }
+    })();
+  }, []);
 
   async function changeUserAuthStatus(e) {
     e.preventDefault();
 
     try {
-      let fm = new Fortmatic(process.env.FORTMATIC_KEY);
+      let fm = new Fortmatic(process.env.FORTMATIC_KEY, "ropsten");
       window.web3 = new Web3(fm.getProvider());
 
       let isUserLoggedIn = await fm.user.isLoggedIn();
       if (!isUserLoggedIn) {
-        const address = await web3.eth.getCoinbase();
-        const balance = await web3.eth.getBalance(address);
-
-        // const provider = await Box.get3idConnectProvider();
-        // const box = await Box.openBox(coinbase, provider);
-
-        // const spaces = ["DonaTo"];
-        // await box.auth(spaces, { address: coinbase });
-
-        // console.log("Started syncing...");
-        // await box.syncDone;
-
-        // const nickname = await box.public.get("name");
-        // console.log(nickname);
-
+        const { address, balance } = await getUserAddressAndCoinBalance();
         await dispatch(updateUser({ address, balance }));
       } else {
         await fm.user.logout();
