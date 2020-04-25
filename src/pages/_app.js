@@ -1,7 +1,15 @@
+import { Provider } from "react-redux";
+
+import withReduxStore from "../lib/withReduxStore";
+
 import "../style.css";
 
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />;
+function DonatoApp({ Component, pageProps, reduxStore }) {
+  return (
+    <Provider store={reduxStore}>
+      <Component {...pageProps} />
+    </Provider>
+  );
 }
 
-export default MyApp;
+export default withReduxStore(DonatoApp);
