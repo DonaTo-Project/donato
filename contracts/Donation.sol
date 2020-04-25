@@ -15,7 +15,8 @@ contract Donato is Ownable, AdminRole {
 
   address payable private _owner;
   address public tokenContractAddress;
-  uint public index;
+  uint public pendingIndex;
+  uint public activeIndex;
   uint public receiverCount;//Number of receivers created, also used as each receiver Id
   struct Candidate {
   	bool exists;
@@ -26,9 +27,11 @@ contract Donato is Ownable, AdminRole {
     string VAT;
 	}
 
-  mapping (address => Candidate) public candidatesList;
 	address[] public pendingAddresses;
+  address[] public activeAddresses;
+  mapping (address => Candidate) public candidatesList;
 	mapping (address => uint) public pendingIndexList;
+  mapping (address => uint) public activeIndexList;
   mapping (address => address) public receiversContractAddresses;//List of receivers contract's addresses
   mapping (string => mapping (string => bool)) private countryVATList;//Mapping of VAT numbers per country, used to avoid double subscription with same VAT number
 
@@ -38,8 +41,9 @@ contract Donato is Ownable, AdminRole {
 
   constructor (address _tokenContractAddress) payable public {
     _owner = msg.sender;
-    index = 0;
-    receiverCount = 0;//Initialize receivers id count to 0
+    pendingIndex = 0;
+    activeIndex = 0;
+    receiverCount = 0;
     tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as paramater
   }
 
@@ -51,9 +55,9 @@ contract Donato is Ownable, AdminRole {
   	require(candidatesList[msg.sender].exists != true, "This address is already used in the pending list");
 
   	candidatesList[msg.sender] = Candidate(true, _name, _category, _description, _country, _VAT);
-  	pendingIndexList[msg.sender] = index;
+  	pendingIndexList[msg.sender] = pendingIndex;
   	pendingAddresses.push(msg.sender);
-  	index = index.add(1);
+  	pendingIndex = pendingIndex.add(1);
 
   	emit ApplicationReceived(msg.sender, _name, _VAT);
 	}
@@ -62,6 +66,11 @@ contract Donato is Ownable, AdminRole {
 		require(pendingAddresses.length > 0, "No pending addresses for the moment");
 		return pendingAddresses;
 	}
+
+  function getActiveAddresses() external view onlyAdmin returns (address[] memory) {
+    require(activeAddresses.length > 0, "No active addresses for the moment");
+    return activeAddresses;
+  }  
 
 	function getPendingCandidateData(address _candidateAddress) external view onlyAdmin returns(
 		string memory name,
@@ -93,12 +102,19 @@ contract Donato is Ownable, AdminRole {
   			tokenContractAddress
   		);
   		receiverCount = receiverCount.add(1);
-  		receiversContractAddresses[_candidateAddress] = address(newReceiver);
+
+      activeIndexList[_candidateAddress] = activeIndex;
+      activeAddresses.push(_candidateAddress);
+      activeIndex = activeIndex.add(1);
+  		
+      receiversContractAddresses[_candidateAddress] = address(newReceiver);
 		}
+
 		uint indexToDelete = pendingIndexList[_candidateAddress];
 		delete pendingAddresses[indexToDelete];
-		candidatesList[_candidateAddress].exists = false;
-		emit ReceiverCreated(
+    candidatesList[_candidateAddress].exists = false;
+		
+    emit ReceiverCreated(
 			_candidateAddress,
 			candidatesList[_candidateAddress].name,
 			candidatesList[_candidateAddress].category,

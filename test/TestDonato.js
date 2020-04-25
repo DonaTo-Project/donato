@@ -108,6 +108,21 @@ contract("Donato", function(accounts){
         expect(pendingAddressesArrayAfter[0]).to.equal('0x0000000000000000000000000000000000000000');
     });
 
+
+    //Test getActiveAddress function
+    it("Check getActiveAddresses() function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+        await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
+
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
+        await this.DonatoInstance.evaluateCandidate(accounts[5], true, {from: donatoContractOwner});
+
+        const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+        expect(activeAddressesArray[0]).to.equal(receiver);
+        expect(activeAddressesArray[1]).to.equal(accounts[5]);
+    });
+
+
     //Test receiverContract can receive DAI tokens
     it("Check sending DAI to receiver function", async function() {
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
