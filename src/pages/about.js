@@ -17,11 +17,11 @@ function About() {
               body: `Next.js is a minimalistic framework for creating server-rendered
               React applications.`,
             },
-          ].map((section) => (
-            <>
+          ].map((section, i) => (
+            <div key={i}>
               <h2 className="mb-3 text-xl font-bold">{section.heading}</h2>
               <p className="mb-6">{section.body}</p>
-            </>
+            </div>
           ))}
         </div>
       </div>

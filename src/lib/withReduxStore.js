@@ -24,7 +24,7 @@ export default (App) => {
       // Get or Create the store with `undefined` as initialState
       // This allows you to set a custom default initialState
       const reduxStore = getOrCreateStore({
-        user: { address: "" },
+        user: { address: "", balance: 0 },
         campaigns: [
           {
             name: "Bottega del quartiere",

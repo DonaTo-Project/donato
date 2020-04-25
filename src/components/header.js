@@ -15,16 +15,46 @@ function Header() {
   const dispatch = useDispatch();
   const [isExpanded, toggleExpansion] = useState(false);
 
+  useEffect(
+    () =>
+      (async () => {
+        let fm = new Fortmatic(process.env.FORTMATIC_KEY);
+        window.web3 = new Web3(fm.getProvider());
+
+        let isUserLoggedIn = await fm.user.isLoggedIn();
+        if (isUserLoggedIn) {
+          const address = await web3.eth.getCoinbase();
+          const balance = await web3.eth.getBalance(address);
+
+          // const provider = await Box.get3idConnectProvider();
+          // const box = await Box.openBox(coinbase, provider);
+
+          // const spaces = ["DonaTo"];
+          // await box.auth(spaces, { address: coinbase });
+
+          // console.log("Started syncing...");
+          // await box.syncDone;
+
+          // const nickname = await box.public.get("name");
+          // console.log(nickname);
+
+          await dispatch(updateUser({ address, balance }));
+        }
+      })(),
+    []
+  );
+
   async function changeUserAuthStatus(e) {
     e.preventDefault();
 
-    let fm = new Fortmatic(process.env.FORTMATIC_KEY);
-    window.web3 = new Web3(fm.getProvider());
-
     try {
+      let fm = new Fortmatic(process.env.FORTMATIC_KEY);
+      window.web3 = new Web3(fm.getProvider());
+
       let isUserLoggedIn = await fm.user.isLoggedIn();
       if (!isUserLoggedIn) {
-        const coinbase = await web3.eth.getCoinbase();
+        const address = await web3.eth.getCoinbase();
+        const balance = await web3.eth.getBalance(address);
 
         // const provider = await Box.get3idConnectProvider();
         // const box = await Box.openBox(coinbase, provider);
@@ -38,10 +68,10 @@ function Header() {
         // const nickname = await box.public.get("name");
         // console.log(nickname);
 
-        await dispatch(updateUser({ address: coinbase }));
+        await dispatch(updateUser({ address, balance }));
       } else {
         await fm.user.logout();
-        await dispatch(updateUser({ address: "" }));
+        await dispatch(updateUser({ address: "", balance: 0 }));
       }
     } catch (err) {
       console.log("AAAAA");
