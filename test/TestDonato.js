@@ -20,7 +20,7 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test Donato meta data after creation
+    //Test 1
     it("Check Donato contract initial meta data", async function() {
         //Check ownership
         expect(await this.DonatoInstance.owner()).to.equal(donatoContractOwner);
@@ -36,7 +36,7 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test Donato contract ownership can be transfered
+    //Test 2
     it("Check Donato contract transferOwnership() function", async function() {
         await this.DonatoInstance.transferOwnership(receiver, {from: donatoContractOwner});
         expect(await this.DonatoInstance.owner()).to.equal(receiver);
@@ -46,10 +46,9 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test add new admin
+    //Test 3
     it("Check addAdmin() function", async function() {
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
-        // const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
 
         //Verifying onlyAdmin modifier
         await expectRevert(this.DonatoInstance.evaluateCandidate(receiver, true, {from: donator1}),"AdminRole: caller does not have the Admin role");
@@ -64,7 +63,7 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test sendApplication function
+    //Test 4
     it("Check sendApplication() function", async function() {
         //Verifying require no empty VAT field
         await expectRevert(this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "", {from: receiver}),"Name, Category, Country and VAT number can't be empty");
@@ -76,27 +75,32 @@ contract("Donato", function(accounts){
         //Verifying msg.sender address not already in the pending list
         await expectRevert(this.DonatoInstance.sendApplication("Il Buono (falso)", "SME", "Rebuild ristorante", "IT", "10547700489", {from: receiver}), "This address is already used in the pending list");
 
+        //Checking candidate data properly saved
         const recipientStruct = await this.DonatoInstance.candidatesList.call(receiver);
         expect(recipientStruct.name).to.equal("Il Buono");
 
+        //Checking recipient address correctly saved in the pending address array
         const recipientAddress = await this.DonatoInstance.pendingAddresses.call(0);
         expect(recipientAddress).to.equal(receiver);
     });
 
-    //Test getPendingAddress function
+    //Test 5
     it("Check getPendingAddresses() function", async function() {
+        //Check revert if no addresses
         await expectRevert(this.DonatoInstance.getPendingAddresses({from: donatoContractOwner}), "No pending addresses for the moment");
 
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
         await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
 
+        //Verifying pending addresses array filled correctly
         const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
         expect(pendingAddressesArray[0]).to.equal(receiver);
         expect(pendingAddressesArray[1]).to.equal(accounts[5]);
     });
 
-    //Test getActiveAddresses function
+    //Test 6
     it("Check getActiveAddresses() function", async function() {
+        //Check revert if no addresses
         await expectRevert(this.DonatoInstance.getActiveAddresses({from: donatoContractOwner}), "No active addresses for the moment");
 
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
@@ -105,17 +109,20 @@ contract("Donato", function(accounts){
         await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
         await this.DonatoInstance.evaluateCandidate(accounts[5], true, {from: donatoContractOwner});
 
+        //Verifying active addresses array filled correctly
         const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
         expect(activeAddressesArray[0]).to.equal(receiver);
         expect(activeAddressesArray[1]).to.equal(accounts[5]);
     });
 
-    //Test getCandidateData function
+    //Test 7
     it("Check getCandidateData() function", async function() {
+        //Check revert if wrong address
         await expectRevert(this.DonatoInstance.getCandidateData(receiver, {from: donatoContractOwner}), "This address doesn't match with any pending candidate");
 
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
 
+        //Check data saved correctly
         const candidateData = await this.DonatoInstance.getCandidateData(receiver, {from: donatoContractOwner});
         expect(candidateData.name).to.equal("Il Buono");
         expect(candidateData.category).to.equal("SME");
@@ -124,8 +131,9 @@ contract("Donato", function(accounts){
         expect(candidateData.VAT).to.equal("00547700489");
     });
 
-    //Test evaluateCandidate function
+    //Test 8
     it("Check evaluateCandidate() function", async function() {
+        //Check revert if wrong address
         await expectRevert(this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner}), "This address doesn't match with any pending candidate");
 
         //Case evaluation is accepted
@@ -134,8 +142,10 @@ contract("Donato", function(accounts){
             const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
             expect(pendingAddressesArray[0]).to.equal(receiver);
 
+            //Accept candidate application
             await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
 
+            //Check process flows
             const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
             expect(activeAddressesArray[0]).to.equal(receiver);
 
@@ -148,20 +158,22 @@ contract("Donato", function(accounts){
         //Case evaluation is rejected
             await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
 
-            const pendingAddressesArrayR = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
-            expect(pendingAddressesArrayR[1]).to.equal(accounts[5]);
+            const pendingAddressesArrayReject = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArrayReject[1]).to.equal(accounts[5]);
 
+            //Reject candidate application
             await this.DonatoInstance.evaluateCandidate(accounts[5], false, {from: donatoContractOwner});
 
-            const pendingAddressesArrayRAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
-            expect(pendingAddressesArrayRAfter[1]).to.equal('0x0000000000000000000000000000000000000000');
+            //Check process flows
+            const pendingAddressesArrayRejectAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArrayRejectAfter[1]).to.equal('0x0000000000000000000000000000000000000000');
 
-            const activeAddressesArrayRAfter = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
-            expect(activeAddressesArrayRAfter.length).to.equal(1);
+            const activeAddressesArrayRejectAfter = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+            expect(activeAddressesArrayRejectAfter.length).to.equal(1);
     });
 
 
-    //Test receiverContract can receive DAI tokens
+    //Test 9
     it("Check sending DAI to receiver function", async function() {
         await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
 
@@ -185,7 +197,7 @@ contract("Donato", function(accounts){
     });
 
 
-    //Test withdrawCall() function that send receiver funds to Donato owner
+    //Test 10
     it("Check withdrawCall() function", async function() {
         //Create receiver
         this.DonatoReceiverInstance = await DonatoReceiver.new(receiver, "La Campagnola", "SME", "Rebuild ristorante", "IT", "00547700489", this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
