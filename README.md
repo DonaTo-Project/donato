@@ -76,6 +76,19 @@ Login again with your SME/association credentials and go to the "Your balance" s
 
 All done!
 
+### Future improvements
+
+* Gas Station Network: adding a GSN so the app is cost free for the candidates
+* Compound integration: generate interests while funds are kept in the contract
+* GPS localization: create a new campaign area when a disaster happens, allowing Proof of Localization for register
+* Historical balance: to keep record of all the funds sent to a receiver and increase transparency
+
 ## License
 
 [MIT](https://github.com/DonaTo-Project/donato/blob/master/LICENSE)
+
+
+
+
+
+
