@@ -233,4 +233,30 @@ contract("Donato", function(accounts){
         expect(afterWithdrawReceiverBalance).to.be.bignumber.equal(beforeWithdrawReceiverBalance.sub(fundAmount));
         expect(afterWithdrawDonatoBalance).to.be.bignumber.equal(beforeWithdrawDonatoBalance.add(fundAmount));
     });
+
+
+    //Test 11
+    it("Check ERC20 stealing impossibility", async function() {
+        //Create receiver
+        this.DonatoReceiverInstance = await DonatoReceiver.new(receiver, "La Campagnola", "SME", "Rebuild ristorante", "IT", "00547700489", this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
+        //Save receiver address
+        const newReceiverContractAddress = await this.DonatoReceiverInstance.address;
+
+        //Transfer DAI to receiver
+        let fundAmount = new BN('50')
+        await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
+
+        //Save receiver and donatoContractOwner DAI balance
+        let beforeWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
+        console.log("Receiver initial balance: ", parseInt(beforeWithdrawReceiverBalance), "DAI");
+        let beforeWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
+        console.log("Doanto owner initial balance: ", parseInt(beforeWithdrawDonatoBalance), "DAI");
+
+        //Check simple ERC20 transfer is impossible from receiver side
+        await expectRevert(this.TokenERC20DaiInstance.transfer(hacker, fundAmount, {from: receiver}), "ERC20: transfer amount exceeds balance.");
+
+        //Check transferFrom denial even after approve call
+        await this.TokenERC20DaiInstance.approve(hacker, fundAmount, {from: receiver});
+        await expectRevert(this.TokenERC20DaiInstance.transferFrom(receiver, hacker, fundAmount, {from: hacker}), "ERC20: transfer amount exceeds balance.");
+    });
 });
