@@ -37,12 +37,16 @@ function AcceptRequests(props) {
         from: user.address,
       });
 
+      console.log(pendingAddresses);
+
       let requestors = [];
       for await (let address of pendingAddresses) {
         try {
-          const candidateData = await DonatoInstance.getPendingCandidateData(
-            address
-          );
+          const candidateData = await DonatoInstance.getCandidateData(address, {
+            from: user.address,
+          });
+
+          console.log(address);
 
           requestors.push({
             address,
@@ -51,7 +55,9 @@ function AcceptRequests(props) {
             description: candidateData.description,
             fiscalId: candidateData.VAT,
           });
-        } catch (err) {}
+        } catch (err) {
+          console.error(err);
+        }
       }
 
       setRecipientsList(requestors);

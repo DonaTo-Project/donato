@@ -24,8 +24,10 @@ function Layout(props) {
     Donato.setProvider(window.web3.currentProvider);
     const DonatoInstance = await Donato.deployed();
 
+    const isAdmin = await DonatoInstance.isAdmin.call(address);
+
     let role = "user";
-    if (await DonatoInstance.isAdmin.call(address)) role = "admin";
+    if (isAdmin) role = "admin";
     else {
       try {
         await DonatoInstance.receiversContractAddresses.call(address);
@@ -49,11 +51,10 @@ function Layout(props) {
           balance,
           role,
         } = await getUserAddressRoleAndCoinBalance();
-        // await Axios.get(`/api/${address}/fund`);
-        await dispatch(updateUser({ address, balance, role, email }));
-      }
 
-      setShowChildren(true);
+        dispatch(updateUser({ address, balance, role, email }));
+        setShowChildren(true);
+      } else setShowChildren(true);
     })();
   }, []);
 

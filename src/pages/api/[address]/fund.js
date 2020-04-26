@@ -1,9 +1,6 @@
 const Web3 = require("web3");
 
-const web3 =
-  process.env.CHAIN_TYPE === "testnet"
-    ? new Web3(`https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`)
-    : new Web3("http://localhost:7545");
+const web3 = new Web3(process.env.CHAIN_API_URL);
 
 export default async function handle(req, res) {
   const [, address] = req.url.substring(1).split("/");

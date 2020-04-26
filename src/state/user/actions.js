@@ -16,11 +16,9 @@ const getUser = () => {
 
 // Actions
 const updateUser = (fields) => {
-  return async (dispatch, getState) => {
-    dispatch({
-      type: UPDATE_USER,
-      payload: { fields },
-    });
+  return {
+    type: UPDATE_USER,
+    payload: { fields },
   };
 };
 

@@ -131,6 +131,13 @@ function JoinList() {
     }
   }
 
+  if (user.role === "receiver")
+    return (
+      <Layout>
+        <div>You're already registered!</div>
+      </Layout>
+    );
+
   return (
     <Layout>
       <div className="flex flex-col">

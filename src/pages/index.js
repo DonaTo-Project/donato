@@ -7,6 +7,7 @@ import Router from "next/router";
 
 import Button from "../components/Button";
 import Layout from "../components/Layout";
+import convertERC20BalanceToDecimal from "../utils/convertERC20BalanceToDecimal";
 
 const DonatoContract = require("../../build/contracts/Donato.json");
 const DonatoReceiverContract = require("../../build/contracts/DonatoReceiver.json");
@@ -46,9 +47,9 @@ function Home(props) {
             const receiversBalance = await ERC20Instance.balanceOf(
               addressOfReceiverContract
             );
-            var BN = web3.utils.BN;
 
-            const balance = Number(new BN(receiversBalance).toString());
+            const balance = convertERC20BalanceToDecimal(receiversBalance);
+
             const [name, country, description, category] = await Promise.all([
               DonatoReceiverInstance.name.call(),
               DonatoReceiverInstance.country.call(),
@@ -57,14 +58,12 @@ function Home(props) {
             ]);
 
             console.log(`
-              balance ${balance}
-              name ${name}
-              country ${country}
-              description ${description}
-              category ${category}
+            balance ${balance}
+            name ${name}
+            country ${country}
+            description ${description}
+            category ${category}
             `);
-
-            console.log(DonatoReceiverInstance);
 
             return {
               balance,
@@ -158,29 +157,29 @@ export async function getServerSideProps(context) {
     let day = date.getDate();
     let formattedDate = `${year}-${month}-${day}`;
 
-    const {
-      data: transactions,
-    } = await Axios.get(
-      `https://api.moonpay.io/v1/transactions?startDate=${formattedDate}&endDate=${formattedDate}`,
-      { headers: { Authorization: `Api-Key ${process.env.MOONPAY_KEY}` } }
-    );
-
-    let [transaction] = transactions.filter(
-      (transaction) => transaction.id === transactionId
-    );
-
-    let eurAmount = parseInt(transaction.baseCurrencyAmount);
-    const { data: quote } = await Axios.get(
-      `https://api.moonpay.io/v3/currencies/dai/quote/?apiKey=pk_test_nFTOyIHQO2eGhHDG9NPNUJhMQX7Wjlfw&baseCurrencyAmount=${eurAmount}&baseCurrencyCode=eur&paymentMethod=credit_debit_card`
-    );
-    let recipientAddress = transaction.walletAddress;
-
-    let [intPart, decPart] = quote.quoteCurrencyAmount.toString().split(".");
-    decPart = decPart.padEnd(18, "0");
-    let cryptoAmount = Number(`${intPart}${decPart}`);
-
     try {
+      const {
+        data: transactions,
+      } = await Axios.get(
+        `https://api.moonpay.io/v1/transactions?startDate=${formattedDate}&endDate=${formattedDate}`,
+        { headers: { Authorization: `Api-Key ${process.env.MOONPAY_KEY}` } }
+      );
+
+      let [transaction] = transactions.filter(
+        (transaction) => transaction.id === transactionId
+      );
+
       let web3 = new Web3("http://localhost:7545");
+
+      let eurAmount = parseInt(transaction.baseCurrencyAmount);
+      const { data: quote } = await Axios.get(
+        `https://api.moonpay.io/v3/currencies/dai/quote/?apiKey=pk_test_nFTOyIHQO2eGhHDG9NPNUJhMQX7Wjlfw&baseCurrencyAmount=${eurAmount}&baseCurrencyCode=eur&paymentMethod=credit_debit_card`
+      );
+      let recipientAddress = transaction.walletAddress;
+
+      let [intPart, decPart] = quote.quoteCurrencyAmount.toString().split(".");
+      decPart = decPart.padEnd(18, "0");
+      let cryptoAmount = web3.utils.toBN(Number(`${intPart}${decPart}`));
 
       let ERC20 = Contract(ERC20Contract);
       ERC20.setProvider(web3.currentProvider);

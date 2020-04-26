@@ -10,39 +10,49 @@ import Layout from "../components/Layout";
 import Button from "../components/Button";
 import TextBox from "../components/TextBox";
 import TextArea from "../components/TextArea";
+import Axios from "axios";
+import convertERC20BalanceToDecimal from "../utils/convertERC20BalanceToDecimal";
 
 function Dashboard() {
   const user = useSelector((state) => state.user);
-  const [balance, setBalance] = useState(0);
+  const [contract, setContract] = useState({
+    balance: 0,
+    address: "",
+  });
+
+  async function retrieveAddressAndBalance() {
+    let Donato = Contract(DonatoContract);
+    Donato.setProvider(window.web3.currentProvider);
+    let DonatoInstance = await Donato.deployed();
+
+    let ERC20 = Contract(ERC20Contract);
+    ERC20.setProvider(window.web3.currentProvider);
+    let ERC20Instance = await ERC20.deployed();
+
+    const receiverContractAddress = await DonatoInstance.receiversContractAddresses.call(
+      user.address
+    );
+
+    const receiversBalance = await ERC20Instance.balanceOf(
+      receiverContractAddress
+    );
+
+    const balance = convertERC20BalanceToDecimal(receiversBalance);
+
+    const { data } = await Axios.get(
+      "https://api.moonpay.io/v3/currencies/dai/price?apiKey=pk_test_nFTOyIHQO2eGhHDG9NPNUJhMQX7Wjlfw"
+    );
+
+    setContract({
+      balance: (balance * data.EUR).toFixed(2),
+      address: receiverContractAddress,
+    });
+  }
 
   useEffect(() => {
     (async () => {
       try {
-        let Donato = Contract(DonatoContract);
-        Donato.setProvider(window.web3.currentProvider);
-        let DonatoInstance = await Donato.deployed();
-
-        // let DonatoReceiver = Contract(DonatoReceiverContract);
-        // DonatoReceiver.setProvider(window.web3.currentProvider);
-        // let DonatoReceiverInstance = await DonatoReceiver.deployed();
-
-        let ERC20 = Contract(ERC20Contract);
-        ERC20.setProvider(window.web3.currentProvider);
-        let ERC20Instance = await ERC20.deployed();
-
-        const receiverContractAddress = await DonatoInstance.receiversContractAddresses.call(
-          user.address
-        );
-
-        const receiversBalance = await ERC20Instance.balanceOf(
-          receiverContractAddress
-        );
-
-        var BN = web3.utils.BN;
-
-        setBalance(Number(new BN(receiversBalance).toString()));
-
-        console.log(balance == 0);
+        await retrieveAddressAndBalance();
       } catch (err) {
         console.error(err);
       }
@@ -75,16 +85,6 @@ function Dashboard() {
     e.preventDefault();
 
     let hasErrored = false;
-    if (false) {
-      //cashoutInfo.amount == 0) {
-      setValidationErrors((validationErrors) => {
-        return {
-          ...validationErrors,
-          amount: "Please set a valid amount",
-        };
-      });
-      hasErrored = true;
-    }
 
     if (cashoutInfo.reason.trim() === "") {
       setValidationErrors((validationErrors) => {
@@ -98,21 +98,15 @@ function Dashboard() {
     }
 
     if (!hasErrored) {
-      let Donato = Contract(DonatoReceiverContract);
-      Donato.setProvider(window.web3.currentProvider);
-      let DonatoInstance = await Donato.deployed();
-      // .at(
-      //   "0x290DcEB0ce348c02D6B96e092F21Abe7BdcF60D7"
-      // );
+      let DonatoReceiver = Contract(DonatoReceiverContract);
+      DonatoReceiver.setProvider(window.web3.currentProvider);
+      let DonatoReceiverInstance = await DonatoReceiver.at(contract.address);
 
-      // await DonatoInstance.sendApplication(
-      //   requestor.name,
-      //   requestor.category,
-      //   requestor.description,
-      //   requestor.countryId,
-      //   requestor.fiscalId,
-      //   { from: user.address }
-      // );
+      await DonatoReceiverInstance.withdrawCall(cashoutInfo.reason, {
+        from: user.address,
+      });
+
+      await retrieveAddressAndBalance();
 
       console.log("Submitted");
     }
@@ -122,27 +116,23 @@ function Dashboard() {
     <Layout>
       <div className="flex flex-col">
         <h2 className="mb-3 text-xl font-bold">Your balance</h2>
-        <p className="mb-6 font-mono text-xl">{balance} €</p>
+        <p className="mb-6 font-mono text-xl">{contract.balance} €</p>
         <form
           className="flex flex-col p-4 border-2 border-gray-200 rounded-lg"
           onSubmit={handleFormSubmit}
         >
           <div className="space-y-6">
-            {/* <TextBox
-              label="How much do you want to withdraw?"
-              type="number"
-              value={cashoutInfo.amount}
-              onChange={(e) => handleFieldChange("amount", e.target.value)}
-              min="0"
-              error={validationErrors.amount}
-            /> */}
             <TextArea
               label="For what are you gonna spend these funds for?"
               value={cashoutInfo.reason}
               onChange={(e) => handleFieldChange("reason", e.target.value)}
               error={validationErrors.reason}
             />
-            <Button type="submit" variant="primary" disabled={balance == 0}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={contract.balance == 0}
+            >
               Cash out
             </Button>
           </div>

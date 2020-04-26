@@ -27,8 +27,10 @@ function Header() {
     Donato.setProvider(window.web3.currentProvider);
     const DonatoInstance = await Donato.deployed();
 
+    const isAdmin = await DonatoInstance.isAdmin.call(address);
+
     let role = "user";
-    if (await DonatoInstance.isAdmin.call(address)) role = "admin";
+    if (isAdmin) role = "admin";
     else {
       try {
         await DonatoInstance.receiversContractAddresses.call(address);
@@ -55,6 +57,7 @@ function Header() {
           role,
         } = await getUserAddressRoleAndCoinBalance();
         await Axios.get(`/api/${address}/fund`);
+
         await dispatch(updateUser({ address, balance, role, email }));
       } else {
         await fm.user.logout();
