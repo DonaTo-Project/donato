@@ -34,8 +34,6 @@ function Dashboard() {
           user.address
         );
 
-        console.log(receiverContractAddress);
-
         const receiversBalance = await ERC20Instance.balanceOf(
           receiverContractAddress
         );

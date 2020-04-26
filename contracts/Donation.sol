@@ -79,10 +79,10 @@ contract Donato is Ownable, AdminRole {
   ///@notice Get all the addresses of the candidates that are active
   ///@dev Get all addresses contained inside activeAddresses array, reject if array is empty
   ///@return active addresses array
-  function getActiveAddresses() external view onlyAdmin returns (address[] memory) {
+  function getActiveAddresses() external view returns (address[] memory) {
     require(activeAddresses.length > 0, "No active addresses for the moment");
     return activeAddresses;
-  }  
+  }
 
   ///@notice Get the informations of a Candidate
   ///@dev Return candidate data contained in the struct, reject if candidate address is wrong

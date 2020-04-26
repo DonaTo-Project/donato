@@ -15,10 +15,10 @@ contract DonatoReceiver {
   address payable private _owner;
   address tokenContractAddress;
 	bool status;
-  string name;
-  string category;
-  string description;
-  string country;
+  string public name;
+  string public category;
+  string public description;
+  string public country;
   string VAT;
 
   ///Events
