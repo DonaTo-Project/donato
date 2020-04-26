@@ -150,7 +150,7 @@ export async function getServerSideProps(context) {
   } = context.query;
   const { res } = context;
 
-  if (process.env.CHAIN_TYPE === "ganache" && transactionId !== "") {
+  if (process.env.CHAIN_TYPE === "local" && transactionId !== "") {
     let date = new Date();
     let year = date.getFullYear();
     let month = date.getMonth() + 1;
@@ -169,7 +169,7 @@ export async function getServerSideProps(context) {
         (transaction) => transaction.id === transactionId
       );
 
-      let web3 = new Web3("http://localhost:7545");
+      let web3 = new Web3(process.env.CHAIN_API_URL);
 
       let eurAmount = parseInt(transaction.baseCurrencyAmount);
       const { data: quote } = await Axios.get(

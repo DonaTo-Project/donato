@@ -4,13 +4,14 @@
   "description": "Donation platform based on Ethereum",
   "main": "index.js",
   "scripts": {
-    "migrate-contracts:local": "dotenv -e .env.ganache truffle migrate",
+    "migrate-contracts:local": "dotenv -e .env.local truffle migrate",
     "migrate-contracts:testnet": "dotenv -e .env.testnet truffle migrate",
-    "dev:local": "dotenv -e .env.ganache next",
+    "grant-local-admin-access": "dotenv -e .env.local node ./src/utils/giveAdminAccess.js",
+    "dev:local": "dotenv -e .env.local next",
     "dev:testnet": "dotenv -e .env.testnet next",
     "build": "next build",
     "export": "npm run build && next export",
-    "start": "dotenv next start",
+    "start": "next start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

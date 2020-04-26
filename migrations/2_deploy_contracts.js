@@ -4,7 +4,7 @@ const Donato = artifacts.require("Donato");
 
 module.exports = function (deployer) {
   deployer.then(async () => {
-    if (process.env.CHAIN_TYPE === "ganache") {
+    if (process.env.CHAIN_TYPE === "local") {
       await deployer.deploy(ERC20Mintable);
       await deployer.deploy(Donato, ERC20Mintable.address);
     } else if (process.env.CHAIN_TYPE === "testnet")

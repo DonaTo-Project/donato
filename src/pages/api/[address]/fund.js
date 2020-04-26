@@ -19,7 +19,7 @@ export default async function handle(req, res) {
   const txParams = {
     to: address,
     gas: "21000",
-    value: web3.utils.toWei("0.05"),
+    value: web3.utils.toWei("0.1"),
   };
 
   const { rawTransaction } = await web3.eth.accounts.signTransaction(

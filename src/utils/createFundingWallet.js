@@ -1,6 +1,6 @@
 const Web3 = require("web3");
 
-const web3 = new Web3(`https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`);
+const web3 = new Web3(process.env.CHAIN_API_URL);
 
 (async () => {
   const wallet = await web3.eth.accounts.wallet.create(1);

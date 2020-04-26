@@ -58,6 +58,13 @@ function Header() {
         } = await getUserAddressRoleAndCoinBalance();
         await Axios.get(`/api/${address}/fund`);
 
+        console.log(`
+        ****************************+
+        
+        User Ethereum address: ${address}
+
+        *****************************`);
+
         await dispatch(updateUser({ address, balance, role, email }));
       } else {
         await fm.user.logout();
@@ -67,7 +74,7 @@ function Header() {
         router.push("/");
       }
     } catch (err) {
-      console.log("AAAAA");
+      console.log("Error");
       console.log(err);
     }
   }
