@@ -64,7 +64,7 @@ Login with another one of your three emails. When you're successfully logged in 
 
 #### Third login: admin again
 
-Login again with your admin credentials and go to the "Requests section": here you can see yuour previously submitted application, just approve it and logout
+Login again with your admin credentials and go to the "Requests section": here you can see your previously submitted application, just approve it and logout
 
 #### Purchase: donor
 
@@ -76,12 +76,6 @@ Login again with your SME/association credentials and go to the "Your balance" s
 
 All done!
 
-### Future improvements
-
-* Gas Station Network: adding a GSN so the app is cost free for the candidates
-* Compound integration: generate interests while funds are kept in the contract
-* GPS localization: create a new campaign area when a disaster happens, allowing Proof of Localization for register
-* Historical balance: to keep record of all the funds sent to a receiver and increase transparency
 
 ## License
 
