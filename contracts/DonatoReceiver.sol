@@ -4,8 +4,7 @@ import "./SafeMath.sol";
 import "./ERC20Mintable.sol";//MoonPayToken Contract
 
 contract DonatoReceiver {
-		
-	//Contract settings:
+
 	using SafeMath for uint;
 
 	address payable private donatoOwner;
@@ -34,14 +33,11 @@ contract DonatoReceiver {
   }
 
 
-	//Contract functions:
-
-  //Send receiver's balance
   function withdrawCall(string calldata _withdrawalReason) external {
     require(msg.sender != address(0), "Address 0 calling");
   	require(msg.sender == _owner, "Caller is not the owner");
-  	//Instantiate DAI contract
-  	ERC20Detailed TokenDAI = ERC20Detailed(tokenContractAddress);
+
+  	ERC20Mintable TokenDAI = ERC20Mintable(tokenContractAddress);
 		uint256 tokenbalance = TokenDAI.balanceOf(address(this));
   	require(tokenbalance > 0, "Receiver's balance is empty");
 		

@@ -4,11 +4,8 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./DonatoReceiver.sol";
 import "./AdminRole.sol";
-import "./ERC20Mintable.sol";//MoonPayToken Contract
 
 contract Donato is Ownable, AdminRole {
-		
-	//Contract settings:
 
 	using SafeMath for uint;
   DonatoReceiver public newReceiver;
@@ -17,7 +14,6 @@ contract Donato is Ownable, AdminRole {
   address public tokenContractAddress;
   uint public pendingIndex;
   uint public activeIndex;
-  // uint public receiverCount;//Number of receivers created, also used as each receiver Id
 
   struct Candidate {
   	bool exists;
@@ -44,12 +40,9 @@ contract Donato is Ownable, AdminRole {
     _owner = msg.sender;
     pendingIndex = 0;
     activeIndex = 0;
-    // receiverCount = 0;
     tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as parameter
   }
 
-
-  //Contract functions:
 
 	function sendApplication(string calldata _name, string calldata _category, string calldata _description, string calldata _country, string calldata _VAT) external {
   	require(bytes(_name).length != 0 && bytes(_category).length != 0 && bytes(_country).length != 0 && bytes(_VAT).length != 0, "Name, Category, Country and VAT number can't be empty");
@@ -105,7 +98,6 @@ contract Donato is Ownable, AdminRole {
   			candidatesList[_candidateAddress].VAT,
   			tokenContractAddress
   		);
-  		// receiverCount = receiverCount.add(1);
 
       activeIndexList[_candidateAddress] = activeIndex;
       activeAddresses.push(_candidateAddress);
