@@ -28,9 +28,11 @@ contract("Donato", function(accounts){
         //Check adminRole
         expect(await this.DonatoInstance.isAdmin(donatoContractOwner)).to.equal(true);
 
-        //Check initial receiver count = 0 (constructor)
-        const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
-        expect(initialReceiverCount).to.be.bignumber.equal(new BN('0'));
+        //Check initialized constructor ok
+        const initialpendingIndex = await this.DonatoInstance.pendingIndex.call();
+        expect(initialpendingIndex).to.be.bignumber.equal(new BN('0'));
+        const initialTokenContractAddress = await this.DonatoInstance.tokenContractAddress.call();
+        expect(initialTokenContractAddress).to.equal(this.TokenERC20DaiInstance.address);
     });
 
 
@@ -46,8 +48,8 @@ contract("Donato", function(accounts){
 
     //Test add new admin
     it("Check addAdmin() function", async function() {
-        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
-        const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+        // const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
 
         //Verifying onlyAdmin modifier
         await expectRevert(this.DonatoInstance.evaluateCandidate(receiver, true, {from: donator1}),"AdminRole: caller does not have the Admin role");
@@ -57,22 +59,22 @@ contract("Donato", function(accounts){
         await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donator1});
 
         //Verify evaluateCandidate function worked
-        const afterReceiverCount = await this.DonatoInstance.receiverCount.call();
-        expect(afterReceiverCount).to.be.bignumber.equal(initialReceiverCount.add(new BN('1')));
+        const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+        expect(activeAddressesArray[0]).to.equal(receiver);
     });
 
 
     //Test sendApplication function
     it("Check sendApplication() function", async function() {
         //Verifying require no empty VAT field
-        await expectRevert(this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "", {from: receiver}),"Name, Category, Country and VAT number can't be empty");
+        await expectRevert(this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "", {from: receiver}),"Name, Category, Country and VAT number can't be empty");
         
         //Verifying VAT number not already used
-        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
-        await expectRevert(this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: hacker}),"VAT number already used");
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+        await expectRevert(this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: hacker}),"VAT number already used");
 
         //Verifying msg.sender address not already in the pending list
-        await expectRevert(this.DonatoInstance.sendApplication("Il Buono (falso)", "SME", "Ristorante", "IT", "10547700489", {from: receiver}), "This address is already used in the pending list");
+        await expectRevert(this.DonatoInstance.sendApplication("Il Buono (falso)", "SME", "Rebuild ristorante", "IT", "10547700489", {from: receiver}), "This address is already used in the pending list");
 
         const recipientStruct = await this.DonatoInstance.candidatesList.call(receiver);
         expect(recipientStruct.name).to.equal("Il Buono");
@@ -81,114 +83,142 @@ contract("Donato", function(accounts){
         expect(recipientAddress).to.equal(receiver);
     });
 
-    // //Test getPendingAddress function
-    // it("Check getPendingAddresses() function", async function() {
-    //     await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
-    //     await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
+    //Test getPendingAddress function
+    it("Check getPendingAddresses() function", async function() {
+        await expectRevert(this.DonatoInstance.getPendingAddresses({from: donatoContractOwner}), "No pending addresses for the moment");
 
-    //     const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
-    //     expect(pendingAddressesArray[0]).to.equal(receiver);
-    //     expect(pendingAddressesArray[1]).to.equal(accounts[5]);
-    // });
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+        await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
 
-    // //Test getPendingCandidateData function
-    // it("Check getPendingCandidateData() function", async function() {
-    //     await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+        const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+        expect(pendingAddressesArray[0]).to.equal(receiver);
+        expect(pendingAddressesArray[1]).to.equal(accounts[5]);
+    });
 
-    //     const pendingCandidateData = await this.DonatoInstance.getPendingCandidateData(receiver, {from: donatoContractOwner});
-    //     expect(pendingCandidateData.name).to.equal("Il Buono");
-    //     expect(pendingCandidateData.category).to.equal("SME");
-    //     expect(pendingCandidateData.description).to.equal("Ristorante");
-    //     expect(pendingCandidateData.country).to.equal("IT");
-    //     expect(pendingCandidateData.VAT).to.equal("00547700489");
-    // });
+    //Test getActiveAddresses function
+    it("Check getActiveAddresses() function", async function() {
+        await expectRevert(this.DonatoInstance.getActiveAddresses({from: donatoContractOwner}), "No active addresses for the moment");
 
-    // //Test evaluateCandidate function
-    // it("Check evaluateCandidate() function", async function() {
-    //     await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+        await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
 
-    //     //Save initial receiver count
-    //     const initialReceiverCount = await this.DonatoInstance.receiverCount.call();
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
+        await this.DonatoInstance.evaluateCandidate(accounts[5], true, {from: donatoContractOwner});
 
-    //     await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
+        const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+        expect(activeAddressesArray[0]).to.equal(receiver);
+        expect(activeAddressesArray[1]).to.equal(accounts[5]);
+    });
 
-    //     const afterReceiverCount = await this.DonatoInstance.receiverCount.call();
-    //     expect(afterReceiverCount).to.be.bignumber.equal(initialReceiverCount.add(new BN('1')));
+    //Test getCandidateData function
+    it("Check getCandidateData() function", async function() {
+        await expectRevert(this.DonatoInstance.getCandidateData(receiver, {from: donatoContractOwner}), "This address doesn't match with any pending candidate");
 
-    //     const pendingAddressesArrayAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
-    //     expect(pendingAddressesArrayAfter[0]).to.equal('0x0000000000000000000000000000000000000000');
-    // });
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+
+        const candidateData = await this.DonatoInstance.getCandidateData(receiver, {from: donatoContractOwner});
+        expect(candidateData.name).to.equal("Il Buono");
+        expect(candidateData.category).to.equal("SME");
+        expect(candidateData.description).to.equal("Rebuild ristorante");
+        expect(candidateData.country).to.equal("IT");
+        expect(candidateData.VAT).to.equal("00547700489");
+    });
+
+    //Test evaluateCandidate function
+    it("Check evaluateCandidate() function", async function() {
+        await expectRevert(this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner}), "This address doesn't match with any pending candidate");
+
+        //Case evaluation is accepted
+            await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
+
+            const pendingAddressesArray = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArray[0]).to.equal(receiver);
+
+            await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
+
+            const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+            expect(activeAddressesArray[0]).to.equal(receiver);
+
+            const receiverContractAddress = await this.DonatoInstance.receiversContractAddresses.call(receiver);
+            expect(receiverContractAddress).not.to.equal("");
+
+            const pendingAddressesArrayAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArrayAfter[0]).to.equal('0x0000000000000000000000000000000000000000');
+
+        //Case evaluation is rejected
+            await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
+
+            const pendingAddressesArrayR = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArrayR[1]).to.equal(accounts[5]);
+
+            await this.DonatoInstance.evaluateCandidate(accounts[5], false, {from: donatoContractOwner});
+
+            const pendingAddressesArrayRAfter = await this.DonatoInstance.getPendingAddresses({from: donatoContractOwner});
+            expect(pendingAddressesArrayRAfter[1]).to.equal('0x0000000000000000000000000000000000000000');
+
+            const activeAddressesArrayRAfter = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
+            expect(activeAddressesArrayRAfter.length).to.equal(1);
+    });
 
 
-    // //Test getActiveAddress function
-    // it("Check getActiveAddresses() function", async function() {
-    //     await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
-    //     await this.DonatoInstance.sendApplication("Croix Rouge", "NGO", "We help people", "France", "15989300547700489", {from: accounts[5]});
+    //Test receiverContract can receive DAI tokens
+    it("Check sending DAI to receiver function", async function() {
+        await this.DonatoInstance.sendApplication("Il Buono", "SME", "Rebuild ristorante", "IT", "00547700489", {from: receiver});
 
-    //     await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
-    //     await this.DonatoInstance.evaluateCandidate(accounts[5], true, {from: donatoContractOwner});
+        await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
 
-    //     const activeAddressesArray = await this.DonatoInstance.getActiveAddresses({from: donatoContractOwner});
-    //     expect(activeAddressesArray[0]).to.equal(receiver);
-    //     expect(activeAddressesArray[1]).to.equal(accounts[5]);
-    // });
-
-
-    // //Test receiverContract can receive DAI tokens
-    // it("Check sending DAI to receiver function", async function() {
-    //     await this.DonatoInstance.sendApplication("Il Buono", "SME", "Ristorante", "IT", "00547700489", {from: receiver});
-
-    //     await this.DonatoInstance.evaluateCandidate(receiver, true, {from: donatoContractOwner});
-
-    //     //Save receiver address
-    //     const newReceiverContractAddress = await this.DonatoInstance.receiversContractAddresses.call(receiver);
+        //Save receiver address
+        const newReceiverContractAddress = await this.DonatoInstance.receiversContractAddresses.call(receiver);
         
-    //     //Save initial DAI balance
-    //     const initialReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
+        //Save initial DAI balance
+        const initialReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
 
-    //     //Transfer DAI to receiver
-    //     const fundAmount = new BN('50')
-    //     await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
+        //Transfer DAI to receiver
+        const fundAmount = new BN('50')
+        await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
 
-    //     //Save new DAI balance
-    //     const afterReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
+        //Save new DAI balance
+        const afterReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
 
-    //     //Compare two balances
-    //     expect(afterReceiverBalance).to.be.bignumber.equal(initialReceiverBalance.add(fundAmount));
-    // });
+        //Compare two balances
+        expect(afterReceiverBalance).to.be.bignumber.equal(initialReceiverBalance.add(fundAmount));
+    });
 
 
-    // //Test withdrawCall() function that send receiver funds to Donato owner
-    // it("Check withdrawCall() function", async function() {
-    //     //Create receiver
-    //     this.DonatoReceiverInstance = await DonatoReceiver.new(receiver, "La Campagnola", "SME", "Ristorante", "IT", "00547700489", this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
-    //     //Save receiver address
-    //     const newReceiverContractAddress = await this.DonatoReceiverInstance.address;
+    //Test withdrawCall() function that send receiver funds to Donato owner
+    it("Check withdrawCall() function", async function() {
+        //Create receiver
+        this.DonatoReceiverInstance = await DonatoReceiver.new(receiver, "La Campagnola", "SME", "Rebuild ristorante", "IT", "00547700489", this.TokenERC20DaiInstance.address, {from: donatoContractOwner});
+        //Save receiver address
+        const newReceiverContractAddress = await this.DonatoReceiverInstance.address;
 
-    //     //Transfer DAI to receiver
-    //     let fundAmount = new BN('50')
-    //     await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
+        //Check revert if balance is empty
+        await expectRevert(this.DonatoReceiverInstance.withdrawCall("To repair the entrance", {from: receiver}),"Receiver's balance is empty");
+        
+        //Transfer DAI to receiver
+        let fundAmount = new BN('50')
+        await this.TokenERC20DaiInstance.transfer(newReceiverContractAddress, fundAmount, {from: donator1});
 
-    //     //Save receiver and donatoContractOwner DAI balance
-    //     let beforeWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
-    //     console.log("Receiver initial balance: ", parseInt(beforeWithdrawReceiverBalance), "DAI");
-    //     let beforeWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
-    //     console.log("Doanto owner initial balance: ", parseInt(beforeWithdrawDonatoBalance), "DAI");
+        //Save receiver and donatoContractOwner DAI balance
+        let beforeWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
+        console.log("Receiver initial balance: ", parseInt(beforeWithdrawReceiverBalance), "DAI");
+        let beforeWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
+        console.log("Doanto owner initial balance: ", parseInt(beforeWithdrawDonatoBalance), "DAI");
 
-    //     //Check owner only can call withdraw function
-    //     await expectRevert(this.DonatoReceiverInstance.withdrawCall({from: hacker}),"Caller is not the owner");
+        //Check owner only can call withdraw function
+        await expectRevert(this.DonatoReceiverInstance.withdrawCall("To repair the entrance", {from: hacker}),"Caller is not the owner");
 
-    //     //Withdraw
-    //     await this.DonatoReceiverInstance.withdrawCall({from: receiver});
+        //Withdraw
+        await this.DonatoReceiverInstance.withdrawCall("To repair the entrance", {from: receiver});
 
-    //     //Save DAI balance
-    //     let afterWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
-    //     console.log("Receiver after balance: ", parseInt(afterWithdrawReceiverBalance), "DAI");
-    //     let afterWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
-    //     console.log("Donato owner after balance: ", parseInt(afterWithdrawDonatoBalance), "DAI");
+        //Save DAI balance
+        let afterWithdrawReceiverBalance = await this.TokenERC20DaiInstance.balanceOf(newReceiverContractAddress);
+        console.log("Receiver after balance: ", parseInt(afterWithdrawReceiverBalance), "DAI");
+        let afterWithdrawDonatoBalance = await this.TokenERC20DaiInstance.balanceOf(donatoContractOwner);
+        console.log("Donato owner after balance: ", parseInt(afterWithdrawDonatoBalance), "DAI");
 
-    //     //Compare balances
-    //     expect(afterWithdrawReceiverBalance).to.be.bignumber.equal(beforeWithdrawReceiverBalance.sub(fundAmount));
-    //     expect(afterWithdrawDonatoBalance).to.be.bignumber.equal(beforeWithdrawDonatoBalance.add(fundAmount));
-    // });
+        //Compare balances
+        expect(afterWithdrawReceiverBalance).to.be.bignumber.equal(beforeWithdrawReceiverBalance.sub(fundAmount));
+        expect(afterWithdrawDonatoBalance).to.be.bignumber.equal(beforeWithdrawDonatoBalance.add(fundAmount));
+    });
 });

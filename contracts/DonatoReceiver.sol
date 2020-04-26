@@ -19,7 +19,7 @@ contract DonatoReceiver {
   string VAT;
 
   //Events
-  event ReceiverWithdrawed(string receiverName, uint amountWithdrawed);
+  event ReceiverWithdrawed(string receiverName, uint amountWithdrawed, string withdrawallReason);
 
   constructor (address payable _candidateAddress, string memory _name, string memory _category, string memory _description, string memory _country, string memory _VAT, address _tokenAddress) payable public {
     donatoOwner = msg.sender;
@@ -37,7 +37,7 @@ contract DonatoReceiver {
 	//Contract functions:
 
   //Send receiver's balance
-  function withdrawCall() external {
+  function withdrawCall(string calldata _withdrawalReason) external {
     require(msg.sender != address(0), "Address 0 calling");
   	require(msg.sender == _owner, "Caller is not the owner");
   	//Instantiate DAI contract
@@ -47,7 +47,7 @@ contract DonatoReceiver {
 		
     TokenDAI.transfer(donatoOwner, tokenbalance);
 
-    emit ReceiverWithdrawed(name, tokenbalance);
+    emit ReceiverWithdrawed(name, tokenbalance, _withdrawalReason);
   }
 
 }

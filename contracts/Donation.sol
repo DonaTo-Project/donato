@@ -17,7 +17,8 @@ contract Donato is Ownable, AdminRole {
   address public tokenContractAddress;
   uint public pendingIndex;
   uint public activeIndex;
-  uint public receiverCount;//Number of receivers created, also used as each receiver Id
+  // uint public receiverCount;//Number of receivers created, also used as each receiver Id
+
   struct Candidate {
   	bool exists;
     string name;
@@ -37,13 +38,13 @@ contract Donato is Ownable, AdminRole {
 
   //Events
   event ApplicationReceived(address candidateAddress, string name, string VAT);
-  event ReceiverCreated(address candidateAddress, string name, string category, string description, string country, string VAT);
+  event ReceiverContractCreated(address candidateAddress, string name, string category, string description, string country, string VAT, address receiverContractAddress);
 
   constructor (address _tokenContractAddress) payable public {
     _owner = msg.sender;
     pendingIndex = 0;
     activeIndex = 0;
-    receiverCount = 0;
+    // receiverCount = 0;
     tokenContractAddress = _tokenContractAddress;//Save DAI contract address sent as parameter
   }
 
@@ -74,7 +75,7 @@ contract Donato is Ownable, AdminRole {
     return activeAddresses;
   }  
 
-	function getPendingCandidateData(address _candidateAddress) external view onlyAdmin returns(
+	function getCandidateData(address _candidateAddress) external view onlyAdmin returns(
 		string memory name,
 		string memory category,
 		string memory description,
@@ -104,26 +105,27 @@ contract Donato is Ownable, AdminRole {
   			candidatesList[_candidateAddress].VAT,
   			tokenContractAddress
   		);
-  		receiverCount = receiverCount.add(1);
+  		// receiverCount = receiverCount.add(1);
 
       activeIndexList[_candidateAddress] = activeIndex;
       activeAddresses.push(_candidateAddress);
       activeIndex = activeIndex.add(1);
   		
       receiversContractAddresses[_candidateAddress] = address(newReceiver);
+      
+      emit ReceiverContractCreated(
+  			_candidateAddress,
+  			candidatesList[_candidateAddress].name,
+  			candidatesList[_candidateAddress].category,
+  			candidatesList[_candidateAddress].description,
+  			candidatesList[_candidateAddress].country,
+  			candidatesList[_candidateAddress].VAT,
+        address(newReceiver)
+  		);
 		}
 
 		uint indexToDelete = pendingIndexList[_candidateAddress];
 		delete pendingAddresses[indexToDelete];
-    candidatesList[_candidateAddress].exists = false;
 		
-    emit ReceiverCreated(
-			_candidateAddress,
-			candidatesList[_candidateAddress].name,
-			candidatesList[_candidateAddress].category,
-			candidatesList[_candidateAddress].description,
-			candidatesList[_candidateAddress].country,
-			candidatesList[_candidateAddress].VAT
-		);
 	}
 }
