@@ -1,9 +1,9 @@
-function TextBox({ label, value, onChange, error, ...props }) {
+function TextBox({ label, value, onChange, error, type = "text", ...props }) {
   return (
     <div className="flex flex-col">
       <label>{label}</label>
       <input
-        type="text"
+        type={type}
         onChange={onChange}
         className="p-2 bg-gray-200 rounded-md"
         value={value}

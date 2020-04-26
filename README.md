@@ -4,7 +4,7 @@
 
 DonaTo is an application based on Ethereum which aims to bring transparency and accountability to donations.
 
-## How to contribute
+## How to run
 
 To start, clone this repository
 

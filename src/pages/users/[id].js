@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import Box from "3box";
 
 import Layout from "../../components/Layout";
 

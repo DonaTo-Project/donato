@@ -36,9 +36,10 @@ function Home(props) {
               className="flex flex-col justify-between w-full p-4 border-2 border-gray-200 rounded-lg sm:flex-row"
             >
               <div>
-                <Link href="/users/[id]" as={`/users/${campaign.address}`}>
-                  <a className="font-bold hover:underline">{campaign.name}</a>
-                </Link>
+                {/* <Link href="/users/[id]" as={`/users/${campaign.address}`}>
+
+                </Link> */}
+                <h2 className="font-bold">{campaign.name}</h2>
                 <p className="mb-8 text-gray-700">{campaign.description}</p>
                 <span className="p-2 text-purple-800 bg-purple-200 rounded-full">
                   {campaign.balance} € already donated

@@ -113,9 +113,10 @@ function JoinList() {
     if (!hasErrored) {
       let Donato = Contract(DonatoContract);
       Donato.setProvider(window.web3.currentProvider);
-      let DonatoInstance = await Donato.at(
-        "0x290DcEB0ce348c02D6B96e092F21Abe7BdcF60D7"
-      );
+      let DonatoInstance = await Donato.deployed();
+      // .at(
+      //   "0x290DcEB0ce348c02D6B96e092F21Abe7BdcF60D7"
+      // );
 
       await DonatoInstance.sendApplication(
         requestor.name,

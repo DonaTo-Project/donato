@@ -1,11 +1,12 @@
 const Web3 = require("web3");
 
-const web3 = new Web3(`https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`);
+const web3 =
+  process.env.CHAIN_TYPE === "testnet"
+    ? new Web3(`https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`)
+    : new Web3("http://localhost:7545");
 
 export default async function handle(req, res) {
   const [, address] = req.url.substring(1).split("/");
-
-  console.log(address);
 
   const balance = Number(
     web3.utils.fromWei(await web3.eth.getBalance(address))
@@ -13,7 +14,10 @@ export default async function handle(req, res) {
 
   if (balance > 0) return res.status(200).end();
 
-  let privateKey = `0x${process.env.FUNDING_ACCOUNT_PRIVATE_KEY}`;
+  let privateKey = `0x${process.env.FUNDING_ACCOUNT_PRIVATE_KEY.replace(
+    "0x",
+    ""
+  )}`;
 
   const txParams = {
     to: address,

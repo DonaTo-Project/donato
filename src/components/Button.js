@@ -1,4 +1,4 @@
-function Button({ type, onClick, variant = "primary", ...props }) {
+function Button({ type, onClick, variant = "primary", disabled, ...props }) {
   let buttonClass = "";
   switch (variant) {
     case "primary":
@@ -9,11 +9,14 @@ function Button({ type, onClick, variant = "primary", ...props }) {
       buttonClass = "hover:bg-gray-200";
   }
 
+  if (disabled) buttonClass += " opacity-50 cursor-not-allowed";
+
   return (
     <button
       type={type}
       className={`p-2 rounded-md ${buttonClass}`}
       onClick={onClick}
+      disabled={disabled}
     >
       {props.children}
     </button>
